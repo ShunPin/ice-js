@@ -1,0 +1,29 @@
+{
+  "name": "iceCheck",
+  "description": "IceWebSocket with Express",
+  "main": "app.js",
+  "authors": [
+    "Benson <benson@gosmio.biz>"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "Ice",
+    "WebSocket",
+    "Express"
+  ],
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "ice": "^3.6.2",
+    "forge": "^0.6.42",
+    "crypto-js": "^3.1.6",
+    "axios": "^0.14.0"
+  }
+}

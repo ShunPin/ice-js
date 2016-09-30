@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Zero Ice </title>
+    <link rel="stylesheet" href="/stylesheets/style.css">
+</head>
+
+<body>
+    <h1>Zero Ice</h1>
+    <p>Ice Javascript Welcome to </p>
+
+    <p><input name="btnHello" type="button" value="SayHello" onclick="sayHello()" />​</p>
+    <p><input name="btnLogin" type="button" value="Login" onclick="login()" />​</p>
+
+    <!--<script>console.log("run helloIce 1")</script>-->
+    <script type="text/javascript" src="/letDebug.js"></script>
+    <script type="text/javascript" src="/bower_components/ice/lib/Ice.js"></script>
+    <script type="text/javascript" src="/bower_components/ice/lib/Glacier2.js"></script>
+    <script type="text/javascript" src="/bower_components/ice/lib/IceStorm.js"></script>
+    <script type="text/javascript" src="/bower_components/ice/lib/IceGrid.js"></script>
+    <script type="text/javascript" src="/Hello.js"></script>
+    <script type="text/javascript" src="/SayHello.js"></script>
+
+    <script type="text/javascript" src="/javascripts/cryptico.js"></script>
+    <!--<script type="text/javascript" src="/javascripts/jsencrypt.js"></script>-->
+
+    <script type="text/javascript" src="/bower_components/axios/dist/axios.js"></script>
+    <script type="text/javascript" src="/bower_components/crypto-js/crypto-js.js"></script>
+    <script type="text/javascript" src="/javascripts/base64-binary.js"></script>
+    <script type="text/javascript" src="/javascripts/base64-string.js"></script>
+    <script type="text/javascript" src="/bravoLogin.js"></script>
+    <script>
+        function login() {
+            console.log("Login click");
+
+            bravo.Login();
+        }
+    </script>
+    <!--<script>
+        console.log("run helloIce 3")
+    </script>-->
+</body>
+
+</html>
