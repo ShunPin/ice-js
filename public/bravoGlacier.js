@@ -31,10 +31,12 @@ bravo.Glacier.init = function() {
     initData.properties.setProperty("Ice.Default.InvocationTimeout", "10000");
     initData.properties.setProperty("Ice.RetryIntervals", "-1");
 
+    // TODO: Add Password Property
+
     // TODO: Check Others Property for ws (wss)
     //initData.properties.setProperty("Ice.Plugin.IceSSL", "IceSSL.PluginFactory");
 
-    communicator = Ice.initialize(initData);
+    var communicator = Ice.initialize(initData);
 
     //
     // Get a proxy to the Glacier2 router using checkedCast to ensure
@@ -46,14 +48,26 @@ bravo.Glacier.init = function() {
 bravo.Glacier.createSession = function() {
     var communicator;
     var router;
+    var session;
 
     Ice.Promise.try(
         function() {
-            // TODO:
+            return bravo.Glacier.init();
+            // TODO Check:
         }
     ).then(
-        function() {
-            // TODO:
+        function(r) {
+            router = r;
+            return router.createSession();
+            // TODO Check password:
+        }
+    ).then(
+        function (s) {
+            session = SGTech.AtlanticCity.MemberCenter.RouterSessionPrx.uncheckedCast(s);
+
+            var memberID = session.GetMemberId();
+            console.log(memberID);
+            // TODO: getMemberID
         }
     ).exception(
         function(ex) {
