@@ -31,13 +31,7 @@ bravo.Glacier.init = function() {
     initData.properties.setProperty("Ice.Default.InvocationTimeout", "10000");
     initData.properties.setProperty("Ice.RetryIntervals", "-1");
 
-    // TODO: Add Password Property
-
-    // TODO: Check Others Property for ws (wss)
-    //initData.properties.setProperty("Ice.Plugin.IceSSL", "IceSSL.PluginFactory");
-
     var communicator = Ice.initialize(initData);
-
     //
     // Get a proxy to the Glacier2 router using checkedCast to ensure
     // the Glacier2 server is available.
@@ -52,25 +46,30 @@ bravo.Glacier.createSession = function() {
 
     Ice.Promise.try(
         function() {
-            debugger;
             return bravo.Glacier.init();
-            // TODO Check:
         }
     ).then(
         function(r) {
-            debugger;
             router = r;
-            return router.createSession();
-            // TODO Check password:
+            // 設定登入資訊
+            var context = new Ice.HashMap();
+            context.set(SGTech.AtlanticCity.RequestContract.Context_Platform,"Android");
+            context.set(SGTech.AtlanticCity.RequestContract.Context_Product,"Robot");
+            context.set(SGTech.AtlanticCity.RequestContract.Context_Language,"zh_TW");
+            context.set(SGTech.AtlanticCity.RequestContract.Context_WebSessionId,bravo.loginInfo.AuthCode);
+            context.set(SGTech.AtlanticCity.RequestContract.Context_MemberId,bravo.loginInfo.MemberId);
+            return router.createSessionFromSecureConnection(context);
         }
     ).then(
         function (s) {
-            debugger;
             session = SGTech.AtlanticCity.MemberCenter.RouterSessionPrx.uncheckedCast(s);
-
-            var memberID = session.GetMemberId();
-            console.log(memberID);
-            // TODO: getMemberID
+            // 呼叫 GetMemberId()
+            return session.GetMemberId();
+        }
+    ).then(
+        function (getMemberID) {
+            // GetMemberId 成功
+            console.log("GetMemberId 成功", getMemberID);
         }
     ).exception(
         function(ex) {
@@ -80,13 +79,13 @@ bravo.Glacier.createSession = function() {
             // Handle any exceptions that occurred during session creation.
             //
             if (ex instanceof Glacier2.PermissionDeniedException) {
-                error("permission denied:\n" + ex.reason);
+                console.error("permission denied:\n" + ex.reason);
             } else if (ex instanceof Glacier2.CannotCreateSessionException) {
-                error("cannot create session:\n" + ex.reason);
+                console.error("cannot create session:\n" + ex.reason);
             } else if (ex instanceof Ice.ConnectFailedException) {
-                error("connection to server failed");
+                console.error("connection to server failed");
             } else {
-                error(ex.toString());
+                console.error(ex.toString());
             }
 
             if (communicator) {
