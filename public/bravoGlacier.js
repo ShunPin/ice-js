@@ -13,7 +13,7 @@ bravo.Glacier.init = function() {
 
     // 取 loginInfo (連線字串), 為 Default router
     // localStorage.setItem("loginInfo", JSON.stringify(bravo.loginInfo));   
-    var router = bravo.loginInfo;
+    var router = bravo.loginInfo.GlacierConnectionString;
 
     //
     // Initialize the communicator with the Ice.Default.Router property
@@ -52,17 +52,20 @@ bravo.Glacier.createSession = function() {
 
     Ice.Promise.try(
         function() {
+            debugger;
             return bravo.Glacier.init();
             // TODO Check:
         }
     ).then(
         function(r) {
+            debugger;
             router = r;
             return router.createSession();
             // TODO Check password:
         }
     ).then(
         function (s) {
+            debugger;
             session = SGTech.AtlanticCity.MemberCenter.RouterSessionPrx.uncheckedCast(s);
 
             var memberID = session.GetMemberId();
@@ -71,6 +74,7 @@ bravo.Glacier.createSession = function() {
         }
     ).exception(
         function(ex) {
+            debugger;
             // TODO:
             //
             // Handle any exceptions that occurred during session creation.

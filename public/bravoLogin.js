@@ -210,6 +210,9 @@ bravo.FastLogin = function() {
                         // 計錄 loginInfo
                         bravo.loginInfo = loginInfo;
                         console.log("登入成功!!");
+
+                        bravo.Glacier.createSession();
+                        // TODO: Check
                     }
                 } else {
                     console.log("登入失敗!!");
