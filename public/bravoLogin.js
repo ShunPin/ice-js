@@ -1,5 +1,11 @@
 (function (module, require, exports) {
     //axios.defaults.withCredentials = true;
+    if (typeof cryptico == 'undefined') {
+        cryptico = require("cryptico-js");
+        RSAKey = require("cryptico-js").RSAKey;
+    }
+
+    var Ice = require("ice").Ice;
 
     var BravoLogin = Ice.Class({
 
