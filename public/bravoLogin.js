@@ -1,11 +1,26 @@
 (function (module, require, exports) {
     //axios.defaults.withCredentials = true;
-    if (typeof cryptico == 'undefined') {
+
+    var cryptico;
+    var RSAKey;
+    var axios;
+    var CryptoJS;
+    var Ice = require("ice").Ice;
+
+    // Node.js
+    if (typeof window === 'undefined') {
         cryptico = require("cryptico-js");
         RSAKey = require("cryptico-js").RSAKey;
+        axios = require("axios");
+        CryptoJS = require("crypto-js");
     }
-
-    var Ice = require("ice").Ice;
+    // Browser
+    else {
+        cryptico = window.cryptico;
+        RSAKey = window.RSAKey;
+        axios = window.axios;
+        CryptoJS = window.CryptoJS;
+    }
 
     var BravoLogin = Ice.Class({
 
@@ -294,7 +309,8 @@
             // console.log(pubKeyBase64);
 
             // 以 HexString 編碼
-            var pubKeyBase64 = stringToHex(pubKeyXML);
+
+            var pubKeyBase64 = CryptoJS.enc.Latin1.parse(pubKeyXML).toString(CryptoJS.enc.Hex);
             // console.log(pubKeyBase64);
 
             var body = {
