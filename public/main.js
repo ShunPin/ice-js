@@ -2,52 +2,6 @@
  * Created by benson on 2016/10/5.
  */
 
-// Bravo Casino Main
-function arraytoHexString(byteArray) {
-    var result = "";
-    byteArray.forEach(function(byte) {
-        result += ('0' + (byte & 0xFF).toString(16)).slice(-2)
-    });
-
-    return result;
-}
-
-function hexStringToArray(str) {
-    var result = [];
-    while (str.length >= 2) {
-        result.push(parseInt(str.substring(0, 2), 16));
-
-        str = str.substring(2, str.length);
-    }
-
-    return result;
-}
-
-function stringToHex(str) {
-    var hex;
-    try {
-        hex = unescape(encodeURIComponent(str))
-            .split('').map(function(v) {
-                return v.charCodeAt(0).toString(16);
-            }).join('')
-    } catch (e) {
-        hex = str;
-        console.log('invalid text input: ' + str)
-    }
-    return hex;
-}
-
-function stringFromHex(hex) {
-    var str;
-    try {
-        str = decodeURIComponent(hex.replace(/(..)/g, '%$1'))
-    } catch (e) {
-        str = hex
-        console.log('invalid hex input: ' + hex)
-    }
-    return str
-}
-
 var bravo = bravo || {};
 
 bravo.testLogin = function() {
