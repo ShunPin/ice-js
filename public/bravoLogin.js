@@ -30,6 +30,7 @@
             this.loginInfo = loginInfo;
             this.RSAKey = undefined;
             this.AESKey = undefined;
+            //this.httpCookies = undefined;
         },
 
         /**
@@ -59,6 +60,8 @@
                     var result_code = response.data.result_code;
                     if (result_code && result_code == "OK") {
                         console.log("API_Call::OK");
+                        // self.httpCookies = response.headers["set-cookie"];
+                        // self.axiosConfig.headers = {"set-cookie" : self.httpCookies};
 
                         // 取出 result_data
                         var result_data = response.data.result_data;
@@ -80,10 +83,6 @@
                                     // success
                                     function (session) {
                                         promise.succeed(session);
-                                    },
-                                    // fail
-                                    function (msg) {
-                                        promise.fail(msg);
                                     }
                                 ).exception(
                                     function (ex) {
@@ -128,21 +127,16 @@
                         var glacier = new BravoGlacier(self.loginInfo);
                         self.glacier = glacier;
                         return glacier.createSession();
-                    },
-                    // fail
-                    function (msg) {
-                        // guest 登入失敗
-                        this.promise.fail(msg);
                     }
                 ).then(
                     // success
                     function (session) {
                         console.log("glacier 登入成功");
                         promise.succeed(session);
-                    },
-                    // fail
-                    function () {
-                        promise.fail("glacier 登入失敗");
+                    }
+                ).exception(
+                    function (ex) {
+                        promise.fail(ex.toString());
                     }
                 );
             } else {
@@ -156,21 +150,16 @@
                         var glacier = new BravoGlacier(self.loginInfo);
                         self.glacier = glacier;
                         return glacier.createSession();
-                    },
-                    // fail
-                    function (msg) {
-                        // fast 登入失敗
-                        promise.fail(msg);
                     }
                 ).then(
                     // success
                     function (session) {
                         console.log("glacier 登入成功");
                         promise.succeed(session);
-                    },
-                    // fail
-                    function () {
-                        promise.fail("glacier 登入失敗");
+                    }
+                ).exception(
+                    function (ex) {
+                        promise.fail(ex.toString());
                     }
                 );
             }
@@ -309,7 +298,6 @@
             // console.log(pubKeyBase64);
 
             // 以 HexString 編碼
-
             var pubKeyBase64 = CryptoJS.enc.Latin1.parse(pubKeyXML).toString(CryptoJS.enc.Hex);
             // console.log(pubKeyBase64);
 
