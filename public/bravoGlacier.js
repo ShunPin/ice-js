@@ -46,14 +46,8 @@
 
             return Glacier2.RouterPrx.checkedCast(self.communicator.getDefaultRouter()).then(
                 function (router) {
+                    // 計錄 RouterPrx
                     self.router = router;
-                    var connection = router.ice_getCachedConnection();
-                    connection.setCallback({
-                        closed: function()
-                        {
-                            console.error("Connection lost!!");
-                        }
-                    });
 
                     // 設定登入資訊
                     var context = new Ice.HashMap();

@@ -54,6 +54,7 @@
             // 準備 GetPreloginEncryptKey Command Body
             var cmdBody = this._getPreloginEncryptKeyCmd();
 
+            //axios.post('/api/call', cmdBody, this.axiosConfig)
             axios.post('/api/GetPreloginEncryptKey', cmdBody, this.axiosConfig)
                 .then(function (response) {
                     // success
@@ -293,8 +294,8 @@
             // 封裝成 ASP.Net 的 XML 格式
             var pubKeyXML = "<RSAKeyValue><Modulus>" + pubKeyString + "</Modulus>" + "<Exponent>" + expKeyString + "</Exponent></RSAKeyValue>";
 
-            // // 以 Base64 編碼
-            // var pubKeyBase64 = Base64.encode(pubKeyXML);
+            // 以 Base64 編碼
+            //var pubKeyBase64 = CryptoJS.enc.Latin1.parse(pubKeyXML).toString(CryptoJS.enc.Base64);
             // console.log(pubKeyBase64);
 
             // 以 HexString 編碼
