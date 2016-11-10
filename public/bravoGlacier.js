@@ -1,5 +1,6 @@
 (function (module, require, exports) {
     var Ice = require('Ice').Ice;
+    var Glacier2 = require("Ice").Glacier2;
 
     // Bravo Casino Glacier
     var BravoGlacier = Ice.Class({

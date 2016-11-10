@@ -6,6 +6,7 @@
     var axios;
     var CryptoJS;
     var Ice = require("ice").Ice;
+    var BravoGlacier = require('../public/bravoGlacier').BravoGlacier;
 
     // Node.js
     if (typeof window === 'undefined') {
@@ -23,14 +24,23 @@
     }
 
     var BravoLogin = Ice.Class({
-
         __init__: function (deviceID,loginInfo) {
-            this.axiosConfig = {withCredentials:true};
+            this.axiosConfig = {withCredentials:true,headers:{}};
             this.DeviceId = deviceID;
             this.loginInfo = loginInfo;
-            this.RSAKey = undefined;
-            this.AESKey = undefined;
-            //this.httpCookies = undefined;
+            this.SessionCookies = [];
+            this.RSAKey = {};
+            this.AESKey = {Key : "", IV : ""};
+            this.Language = "zh_TW";
+        },
+
+        /**
+         * @method clearSessionCookies
+         */
+        clearSessionCookies : function (
+        )
+        {
+            this.SessionCookies = {};
         },
 
         /**
@@ -39,6 +49,16 @@
          */
         setWebsite : function (url) {
             this.axiosConfig.baseURL = url;
+        },
+
+        /**
+         * @method setLanguageTag
+         * @param {String} lang_tag
+         */
+        setLanguageTag : function (
+            lang_tag)
+        {
+            this.Language = lang_tag;
         },
 
         /**
@@ -53,16 +73,22 @@
 
             // 準備 GetPreloginEncryptKey Command Body
             var cmdBody = this._getPreloginEncryptKeyCmd();
-
-            //axios.post('/api/call', cmdBody, this.axiosConfig)
-            axios.post('/api/GetPreloginEncryptKey', cmdBody, this.axiosConfig)
+            this.axiosConfig.headers['Cookie']=self.SessionCookies;
+            axios.post('/api/call', cmdBody, this.axiosConfig)
                 .then(function (response) {
+                    //console.log("response.headers:",JSON.stringify(response.headers));
+                    // Check Cookie and save
+                    var cookie = response.headers['set-cookie'];
+                    if (cookie != undefined)
+                    {
+                        self.SessionCookies = cookie;
+                        console.log("Set-Cookie:",cookie);
+                    }
+
                     // success
                     var result_code = response.data.result_code;
                     if (result_code && result_code == "OK") {
                         console.log("API_Call::OK");
-                        // self.httpCookies = response.headers["set-cookie"];
-                        // self.axiosConfig.headers = {"set-cookie" : self.httpCookies};
 
                         // 取出 result_data
                         var result_data = response.data.result_data;
@@ -70,14 +96,12 @@
                         // HexString 解密
                         if (1) {
                             // 解密
-                            var rsaKey = self.RSAKey;
-                            var resString = rsaKey.decrypt(result_data);
+                            var resString = self._decryptRsaData(result_data);
                             var aesKey = JSON.parse(resString);
-
                             // 儲存 AES_Key
                             if (aesKey) {
-                                self.AESKey = aesKey;
                                 // 取得 AESKey 成功
+                                self._setAesKey(aesKey.Key,aesKey.IV);
 
                                 // 處理登入
                                 self._login(isGuestLogin).then(
@@ -173,6 +197,8 @@
             delete this.loginInfo;
 
             var promise = new Ice.Promise();
+            // TODO: 修改成  _sendEncryptionRequest('/api/calle',);
+            //this._sendEncryptionRequest('/api/calle',);
 
             // 準備 GuestLogin Command Body
             var cmdBody = this._getGuestLoginCmd();
@@ -185,9 +211,16 @@
             var encString = encrypted.ciphertext.toString(CryptoJS.enc.Base64);
 
             var newCmdBody = {"data": encString};
+            this.axiosConfig.headers['Cookie']=self.SessionCookies;
             axios.post('/api/calle', newCmdBody, this.axiosConfig)
                 // success
                 .then(function (response) {
+                    var cookie = response.headers['set-cookie'];
+                    if (cookie != undefined)
+                    {
+                        self.SessionCookies = cookie;
+                        console.log("Set-Cookie:",cookie);
+                    }
 
                     var result_data = response.data;
                     if (result_data && result_data.length > 2) {
@@ -239,9 +272,16 @@
             var encString = encrypted.ciphertext.toString(CryptoJS.enc.Base64);
 
             var newCmdBody = {"data": encString};
+            this.axiosConfig.headers['Cookie']=self.SessionCookies;
             axios.post('/api/calle', newCmdBody, this.axiosConfig)
                 // success
                 .then(function (response) {
+                    var cookie = response.headers['set-cookie'];
+                    if (cookie != undefined)
+                    {
+                        self.SessionCookies = cookie;
+                        console.log("Set-Cookie:",cookie);
+                    }
 
                     var result_data = response.data;
                     if (result_data && result_data.length > 2) {
@@ -277,9 +317,13 @@
             return promise;
         },
 
-        _getPreloginEncryptKeyCmd: function () {
-            if (this.RSAKey) delete this.RSAKey;
-
+        /**
+         * @method getRsaPublicKey
+         * @return {String} rsa key
+         */
+        _getRsaPublicKey : function (
+        )
+        {
             // 產生 RSA Key, 長度 1024, Exponent 0x10001
             var rsa = new RSAKey();
             rsa.generate(1024, "10001");
@@ -294,14 +338,121 @@
             // 封裝成 ASP.Net 的 XML 格式
             var pubKeyXML = "<RSAKeyValue><Modulus>" + pubKeyString + "</Modulus>" + "<Exponent>" + expKeyString + "</Exponent></RSAKeyValue>";
 
-            // 以 Base64 編碼
-            //var pubKeyBase64 = CryptoJS.enc.Latin1.parse(pubKeyXML).toString(CryptoJS.enc.Base64);
-            // console.log(pubKeyBase64);
+            // 以 Base64 String 編碼
+            var pubKeyBase64 = CryptoJS.enc.Latin1.parse(pubKeyXML).toString(CryptoJS.enc.Base64);
 
-            // 以 HexString 編碼
-            var pubKeyBase64 = CryptoJS.enc.Latin1.parse(pubKeyXML).toString(CryptoJS.enc.Hex);
-            // console.log(pubKeyBase64);
+            return pubKeyBase64;
+        },
 
+        /**
+         * @method setAesKey
+         * @param {String} key
+         * @param {String} iv
+         */
+        _setAesKey : function (
+            key,
+            iv
+        )
+        {
+            this.AESKey.Key = key.substring(0);
+            this.AESKey.IV = iv.substring(0);
+        },
+
+        /**
+         * @method decryptRsaData
+         * @param {String} enc_data (BASE64 預設)
+         * @return {String}
+         */
+        _decryptRsaData : function (
+            enc_data
+        )
+        {
+            var rsaKey = this.RSAKey;
+            var decoded_str = CryptoJS.enc.Base64.parse(enc_data).toString();
+            var resString = rsaKey.decrypt(decoded_str);
+            return resString;
+        },
+
+        /**
+         * @method sendRequest
+         * @param {String} url
+         * @param {String} headers
+         * @param {String} params
+         * @param {function} callback
+         */
+        _sendRequest : function (
+            url,
+            headers,
+            params,
+            callback)
+        {
+            var config = {withCredentials:true};
+            config.headers = headers;
+            var cmdBody = JSON.parse(params);
+            this.axiosConfig.headers['Cookie']=self.SessionCookies;
+            axios.post(url, cmdBody, config)
+                .then(function (response) {
+                    callback(response.status, JSON.stringify(response.data));
+                });
+        },
+
+        /**
+         * @method sendEncryptionRequest
+         * @param {String} url
+         * @param {String} headers
+         * @param {String} params
+         * @param {function} callback
+         */
+        _sendEncryptionRequest : function (
+            url,
+            headers,
+            params,
+            callback
+        )
+        {
+            // AES 加密, 並轉 base64
+            var key = CryptoJS.enc.Utf8.parse(this.AESKey.Key);
+            var iv = CryptoJS.enc.Utf8.parse(this.AESKey.IV);
+            var encrypted = CryptoJS.AES.encrypt(params, key, {iv: iv});
+            var encString = encrypted.ciphertext.toString(CryptoJS.enc.Base64);
+
+            var newCmdBody = {"data": encString};
+            var config = {withCredentials:true};
+            // TODO:
+            config.headers['Cookie']=self.SessionCookies;
+            axios.post(url, newCmdBody, config)
+                .then(function (response) {
+                    var cookie = response.headers['set-cookie'];
+                    if (cookie != undefined)
+                    {
+                        self.SessionCookies = cookie;
+                        console.log("Set-Cookie:",cookie);
+                    }
+
+                    var result_data = response.data;
+                    if (result_data && result_data.length > 2) {
+                        // AES 解密
+                        var decrypted = CryptoJS.AES.decrypt(result_data, key, {iv: iv});
+                        var decString = CryptoJS.enc.Utf8.stringify(decrypted);
+                        //var result = JSON.parse(decString);
+                        callback(response.status, decString);
+                    } else {
+                        callback(response.status, response.data);
+                    }
+                })
+                .catch(function (error) {
+                    if (error.response) {
+                        // The request was made, but the server responded with a status code
+                        // that falls out of the range of 2xx
+                        callback(error.response.status, error.response.data);
+                    }
+                });
+        },
+
+        _getPreloginEncryptKeyCmd: function () {
+            if (this.RSAKey) delete this.RSAKey;
+
+            var pubKeyBase64 = this._getRsaPublicKey();
             var body = {
                 "command": "GetPreloginEncryptKey",
                 "data": JSON.stringify({"Key": pubKeyBase64}),
