@@ -16,6 +16,10 @@
 
                 // 取 loginInfo.GlacierConnectionString (連線字串), 為 Default router
                 this.GlacierConnectionString = loginInfo.GlacierConnectionString;
+                // Node.js runtime, 用來壓測使用
+                if (typeof window === 'undefined') {
+                    this.GlacierConnectionString += ":tcp -h 127.0.0.1 -p 8000";
+                }
 
                 //
                 // Initialize the communicator with the Ice.Default.Router property
@@ -52,18 +56,18 @@
 
                     // 設定登入資訊
                     var context = new Ice.HashMap();
-                    var RequestContract = require('RequestContract').SGTech.AtlanticCity.RequestContract;
+                    var RequestContract = require('../public/RequestContract').SGTech.AtlanticCity.RequestContract;
                     context.set(RequestContract.Context_Platform, "Android");
                     context.set(RequestContract.Context_Product, "Robot");
                     context.set(RequestContract.Context_Language, "zh_TW");
                     context.set(RequestContract.Context_WebSessionId, self.loginInfo.AuthCode);
-                    context.set(RequestContract.Context_MemberId, self.loginInfo.MemberId);
+                    context.set(RequestContract.Context_MemberId, self.loginInfo.MemberId.toString());
 
                     console.log('createSession() createSessionFromSecureConnection');
                     return router.createSessionFromSecureConnection(context).then(
                         function (session) {
                             console.log('createSession() uncheckedCast');
-                            var MemberCenter = require('RouterSession').SGTech.AtlanticCity.MemberCenter;
+                            var MemberCenter = require('../public/RouterSession').SGTech.AtlanticCity.MemberCenter;
                             self.session = MemberCenter.RouterSessionPrx.uncheckedCast(session);
                             return self.session;
                         }
@@ -81,7 +85,7 @@
                     } else if (ex instanceof Ice.ConnectFailedException) {
                         console.error("connection to server failed");
                     } else {
-                        console.error(ex);
+                        console.error(ex, ex.stack);
                     }
                     if (self.communicator) {
                         self.communicator.destroy();
