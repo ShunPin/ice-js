@@ -13,7 +13,7 @@ var BravoLogin = require('../public/bravoLogin').BravoLogin;
 /* GET home page. */
 router.get('/', function(req, res, next) {
     //res.render('helloIce', { title: 'Express' });
-    
+
     res.send("開發中, TODO:....");
     log.info('收到 page load request',req.url);
 
@@ -27,13 +27,13 @@ router.get('/test',function (req, res, next) {
     res.send(DeviceId);
 });
 
-router.get('/preTest',function (req, res, next) {
+router.get('/run',function (req, res, next) {
 
     var websiteURL = 'https://www.rd2.atcity.dev';
     //var websiteURL = req.body.websiteURL;
 
     var config = {};
-    config.TargetNumber = 1;
+    config.TargetNumber = 5;
     config.Interval = 1000;
     config.isGuestLogin = true;
     config.Ice = true;

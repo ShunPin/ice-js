@@ -67,7 +67,8 @@ var runner = Ice.Class({
         for (var i=0; i<this.Config.TargetNumber; i++)
         {
             var runner = this.createRunner();
-            this.hashMap[this.Targets.push(runner)]=runner;
+            this.Targets.push(runner);
+            this.hashMap[runner]=i;
         }
         // 開始
         this._begin();
@@ -82,13 +83,13 @@ var runner = Ice.Class({
     // 當 runner 任務完成時呼叫
     success: function (runner) {
         var index = this.hashMap[runner];
-        log.info("StressCommander [SUCCESS],{0}={1}".format("任務完成機器人#",index));
+        log.info("StressCommander [SUCCESS],{0}#{1}".format("任務完成機器人",index));
     },
 
     // 當 runner 任務失敗時呼叫
     fail: function (runner) {
         var index = this.hashMap[runner];
-        log.info("StressCommander [FAIL],{0}={1}".format("任務失敗機器人#",index));
+        log.info("StressCommander [FAIL],{0}#{1}".format("任務失敗機器人",index));
     },
 
     // begin() 開始
@@ -103,7 +104,7 @@ var runner = Ice.Class({
         if (this.runIndex < this.Targets.length)
         {
             var runner = this.Targets[this.runIndex];
-            log.info("StressCommander [Join],{0}={1}".format("加入機器人#",this.runIndex));
+            log.info("StressCommander [Join],{0}#{1}".format("加入機器人",this.runIndex));
             this.runAction(runner);
             this.runIndex++;
         }
