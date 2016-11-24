@@ -14,6 +14,8 @@ var routes = require('./routes/index');
 var users = require('./routes/users');
 var helloIce = require('./routes/helloIce');
 var stressLogin = require('./routes/StressLogin');
+var settings = require('./routes/settings');
+
 
 var app = express();
 
@@ -55,11 +57,13 @@ app.use(bodyParser.urlencoded({extended: false}));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/bower_components', express.static(__dirname + '/bower_components'));
+app.use('/node_modules', express.static(__dirname + '/node_modules'));
 
 app.use('/', routes);
 app.use('/users', users);
 app.use('/ice', helloIce);
 app.use('/stressLogin',stressLogin);
+app.use('/settings',settings);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

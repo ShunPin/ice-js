@@ -14,8 +14,7 @@ var BravoLogin = require('../public/bravoLogin').BravoLogin;
 router.get('/', function(req, res, next) {
     //res.render('helloIce', { title: 'Express' });
 
-    res.send("開發中, TODO:....");
-    log.info('收到 page load request',req.url);
+    res.sendFile(path.resolve(__dirname, '../views/stress.html'));
 
     // TODO:  整合  Kibana  view
     // Check: juttle-viz

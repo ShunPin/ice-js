@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Stress Test Admin</title>
+    <link rel="stylesheet" href="node_modules/ng-admin/build/ng-admin.min.css">
+</head>
+<body ng-app="StressApp">
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-6 col-md-6">
+            <canvas id="myChart"></canvas>
+        </div>
+        <div class="col-lg-6 col-md-6">
+            <canvas id="myChart1"></canvas>
+        </div>
+        <div class="col-lg-12 col-md-12">
+            <div class="row">
+                <div class="col-lg-8 col-md-8">
+                    <textarea id="stressComsole" class="form-control col-lg-8 col-md-8" rows="8" readonly
+                              placeholder="壓測資訊"></textarea>
+                </div>
+                <div class="btn-group-vertical col-lg-4 col-md-4">
+                    <button type="button" class="btn btn-success col-lg-4 col-md-4">Start All</button>
+                    <br>
+                    <button type="button" class="btn btn-danger col-lg-4 col-md-4">Stop All</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript" src="bower_components/chart.js/dist/Chart.min.js"></script>
+<script>
+    var ctx = document.getElementById("myChart");
+    var myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ["Red", "Blue", "Yellow", "Green", "Purple", "Orange"],
+            options: {
+                responsive: false
+            },
+            datasets: [{
+                label: '# of Votes',
+                data: [12, 19, 3, 5, 2, 3],
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.2)',
+                    'rgba(54, 162, 235, 0.2)',
+                    'rgba(255, 206, 86, 0.2)',
+                    'rgba(75, 192, 192, 0.2)',
+                    'rgba(153, 102, 255, 0.2)',
+                    'rgba(255, 159, 64, 0.2)'
+                ],
+                borderColor: [
+                    'rgba(255,99,132,1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 159, 64, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }]
+            }
+        }
+    });
+
+    var ctx1 = document.getElementById("myChart1");
+    var myChart = new Chart(ctx1, {
+        type: 'bar',
+        data: {
+            labels: ["Red", "Blue", "Yellow", "Green", "Purple", "Orange"],
+            options: {
+                responsive: false
+            },
+            datasets: [{
+                label: '# of Votes',
+                data: [12, 19, 3, 5, 2, 3],
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.2)',
+                    'rgba(54, 162, 235, 0.2)',
+                    'rgba(255, 206, 86, 0.2)',
+                    'rgba(75, 192, 192, 0.2)',
+                    'rgba(153, 102, 255, 0.2)',
+                    'rgba(255, 159, 64, 0.2)'
+                ],
+                borderColor: [
+                    'rgba(255,99,132,1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)',
+                    'rgba(255, 159, 64, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }]
+            }
+        }
+    });
+</script>
+
+<div ui-view="ng-admin"></div>
+<script type="text/javascript" src="node_modules/ng-admin/build/ng-admin.min.js"></script>
+<script type="text/javascript" src="stressAdmin.js"></script>
+</body>
+</html>

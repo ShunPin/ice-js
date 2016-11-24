@@ -18,6 +18,7 @@
     "log4js": "^1.0.1",
     "log4js-elasticsearch": "0.0.8",
     "morgan": "~1.7.0",
+    "ng-admin": "^1.0.0-beta3",
     "requirejs": "^2.3.2",
     "serve-favicon": "~2.3.0"
   }
