@@ -31,7 +31,7 @@ if (!String.prototype.format) {
     };
 }
 
-var runner = Ice.Class({
+var commander = Ice.Class({
     __init__: function (config) {
         this.Config = config;
         this.Targets = new Array();
@@ -63,8 +63,8 @@ var runner = Ice.Class({
 
     // start 測試開始
     start: function () {
-        log.info("StressCommander [Before],{0}={1}".format("TargetNumber",this.Config.TargetNumber));
-        for (var i=0; i<this.Config.TargetNumber; i++)
+        log.info("StressCommander [Before],{0}={1}".format("TargetNumber",this.Config.targetCount));
+        for (var i=0; i<this.Config.targetCount; i++)
         {
             var runner = this.createRunner();
             this.Targets.push(runner);
@@ -94,9 +94,9 @@ var runner = Ice.Class({
 
     // begin() 開始
     _begin : function () {
-        log.info("StressCommander [Begin],{0}={1}".format("TargetNumber",this.Config.TargetNumber));
+        log.info("StressCommander [Begin],{0}={1}".format("TargetNumber",this.Config.targetCount));
         this.runIndex = 0;
-        this.intervalID = setInterval(this._each.bind(this), this.Config.Interval);
+        this.intervalID = setInterval(this._each.bind(this), this.Config.interval);
     },
 
     // 還沒達到預定數量時，會依照速度設定呼叫
@@ -116,7 +116,7 @@ var runner = Ice.Class({
 
     // 測試完成
     _finish : function () {
-        log.info("StressCommander [End],{0}={1}".format("TargetNumber",this.Config.TargetNumber));
+        log.info("StressCommander [End],{0}={1}".format("TargetNumber",this.Config.targetCount));
         this._stop();
     },
 
@@ -133,5 +133,5 @@ var runner = Ice.Class({
     },
 });
 
-module.exports = runner;
+module.exports = commander;
     

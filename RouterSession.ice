@@ -23,13 +23,15 @@ module SGTech
 
 				idempotent string GetWebSessionId();
 
+				idempotent string GetDeviceId();
+
 				idempotent string GetPlatform();
 
 				idempotent void GetSessionInfomation(out int memberId, out long presenceSessionId, out string webSessionId);
 
-				idempotent void AddDynamicObserver(DynamicObserverInfo observerInfo);
+				idempotent void AddDynamicObserver(string observerId, DynamicObserverInfo observerInfo);
 
-				idempotent void RemoveDynamicObserver(Object* observer);
+				idempotent void RemoveDynamicObserver(string observerId);
 			};
 		};
 	};

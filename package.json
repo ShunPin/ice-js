@@ -20,6 +20,9 @@
     "morgan": "~1.7.0",
     "ng-admin": "^1.0.0-beta3",
     "requirejs": "^2.3.2",
-    "serve-favicon": "~2.3.0"
-  }
+    "sequelize": "^3.27.0",
+    "serve-favicon": "~2.3.0",
+    "sqlite3": "^3.1.8"
+  },
+  "devDependencies": {}
 }

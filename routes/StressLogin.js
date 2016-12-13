@@ -10,20 +10,49 @@ var Ice = require("Ice").Ice;
 var Commander = require('../public/StressCommander');
 var BravoLogin = require('../public/bravoLogin').BravoLogin;
 
+var mgrCommander = {};
 /* GET home page. */
 router.get('/', function(req, res, next) {
-    //res.render('helloIce', { title: 'Express' });
-
     res.sendFile(path.resolve(__dirname, '../views/stress.html'));
 
     // TODO:  整合  Kibana  view
-    // Check: juttle-viz
 });
 
 router.get('/test',function (req, res, next) {
-    var DeviceId = Ice.generateUUID().toString();
-    log.debug(DeviceId);
-    res.send(DeviceId);
+    /**
+     *  generateUUID 測試
+     */
+    // var DeviceId = Ice.generateUUID().toString();
+    // log.debug(DeviceId);
+    // res.send(DeviceId);
+
+    // 初始化
+    mgrCommander = require('../server/MgrCommander');
+    mgrCommander.setWebsite('https://www.rd2.atcity.dev');
+
+    res.send('Setting OK')
+    res.status(200).end();
+});
+
+router.get('/test/:id', function (req, res, next) {    //res.send('respond with a resource');
+    // 測試將 id 內狀態改變 ( Stop <-> Run )
+    var id = req.params.id;
+    mgrCommander.get(id,function (err,obj) {
+        if (err) {
+            res.render('error', {
+                message: err.message,
+                error: {}
+            });
+        }
+        else {
+            //console.log(results);
+            // clone obj
+            var newObj = JSON.parse(JSON.stringify(obj));
+            newObj.running = !obj.running;
+            mgrCommander.set(id,newObj);
+            res.status(200).end();
+        }
+    });
 });
 
 router.get('/run',function (req, res, next) {
@@ -32,8 +61,8 @@ router.get('/run',function (req, res, next) {
     //var websiteURL = req.body.websiteURL;
 
     var config = {};
-    config.TargetNumber = 5;
-    config.Interval = 1000;
+    config.targetCount = 5;
+    config.interval = 1000;
     config.isGuestLogin = true;
     config.Ice = true;
     // 要壓測的參數
@@ -80,8 +109,8 @@ router.get('/login', function(req, res, next) {
     var websiteURL = 'https://www.rd2.atcity.dev';
     //var websiteURL = req.body.websiteURL;
     var config = {};
-    config.TargetNumber = 100;
-    config.Interval = 100;
+    config.targetCount = 100;
+    config.interval = 100;
     config.Method = "Guest";
     config.Ice = true;
 

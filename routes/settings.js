@@ -3,15 +3,25 @@
  */
 var express = require('express');
 var router = express.Router();
-var model = require('../server/stressModel');
+var model = require('../server/modelSetting');
+var mgrCommander = require('../server/MgrCommander');
+mgrCommander.setWebsite('https://www.rd2.atcity.dev');
 
-/* GET users listing. */
+// 測試 Code , TODO:  Remove
+model.get(null,function (err,array) {
+    for (var i=0; i< array.length; i++){
+        var setting = array[i];
+        mgrCommander.set(setting.id,setting);
+    }
+});
+
+/* GET setting listing. */
 router.get('/', function (req, res, next) {    //res.send('respond with a resource');
     console.log(req.query);
-
     if (req.query.hasOwnProperty('_page'))
     {
-        model.getSettings(null,
+        // 查詢
+        model.get(null,
             function (err, results) {
                 if (err) {
                     res.render('error', {
@@ -26,32 +36,12 @@ router.get('/', function (req, res, next) {    //res.send('respond with a resour
                 }
             });
     }
-    // 預設 Setting
-    else {
-        model.getDefaultSettings(
-            function (err, results) {
-                if (err) {
-                    res.render('error', {
-                        message: err.message,
-                        error: {}
-                    });
-                }
-                else {
-                    //console.log(results);
-                    res.setHeader('Content-Type', 'application/json');
-                    res.json(results);
-                }
-            });
-    }
-
-
 });
 
 // 單一筆資料查詢
 router.get('/:id', function (req, res, next) {    //res.send('respond with a resource');
-    // console.log(req.query);
     // console.log(req.params);
-    model.getSettings(req.params.id,
+    model.get(req.params.id,
         function (err, results) {
             if (err) {
                 res.render('error', {
@@ -67,70 +57,74 @@ router.get('/:id', function (req, res, next) {    //res.send('respond with a res
         });
 });
 
-// Add
+// Add New Setting
 router.post('/', function (req, res) {
-    console.log('Post:', req.url);
-    console.log('Modify',req.params);
-    //model.setSettings();
-    // TODO:  改成存檔
-    var setting = [
-        {
-            'id': 1,
-            'targetCount': 100,
-            'interval': 100,
-            'method': 'GuestLogin',
-            'ice': true,
-            'running': true,
-        },
-        {
-            'id': 2,
-            'targetCount': 100,
-            'interval': 100,
-            'method': 'RegisterLogin',
-            'ice': true,
-            'running': true,
-        },
-        {
-            'id': 3,
-            'targetCount': 200,
-            'interval': 200,
-            'method': 'RegisterLogin',
-            'ice': true,
-            'running': false,
+    //console.log('Post:', req.url);
+    //console.log('Modify',req.body);
+
+    model.add(req.body,
+        function (err, results) {
+            if (err) {
+                res.render('error', {
+                    message: err.message,
+                    error: {}
+                });
+            }
+            else {
+                //console.log(results);
+                // 異動同步 Commander
+                mgrCommander.set(results.id, results);
+                res.setHeader('Content-Type', 'application/json');
+                res.status(200).end();
+            }
         }
-    ];
-    res.send(setting);
+    );
 });
 
 // Update
-router.put('/', function (req, res) {
-    console.log('Put:', req.url);
-    // TODO:  改成存檔
-    var setting = [
-        {
-            'id': 1,
-            'targetCount': 100,
-            'interval': 100,
-            'method': 'GuestLogin',
-            'ice': true,
-            'running': true,
-        },
-        {
-            'id': 2,
-            'targetCount': 100,
-            'interval': 100,
-            'method': 'RegisterLogin',
-            'ice': true,
-            'running': true,
-        },
-    ];
-    res.send(setting);
+router.put('/:id', function (req, res) {
+    //console.log('Put:', req.url);
+    //console.log('Put:', req.body);
+    // console.log(req.params.id);
+    model.set(req.params.id,req.body,
+        function (err, results) {
+            if (err) {
+                res.render('error', {
+                    message: err.message,
+                    error: {}
+                });
+            }
+            else {
+                //console.log(results);
+                // 異動同步 Commander
+                mgrCommander.set(results.id, results);
+
+                res.setHeader('Content-Type', 'application/json');
+                res.status(200).end();
+            }
+        });
 });
 
 // Delete
-router.delete('/', function (req, res) {
-    console.log('Delete:', req.url);
-    // TODO:  改成存檔
-    res.send({});
+router.delete('/:id', function (req, res) {
+    //console.log('Delete:', req.url);
+    //console.log(req.params.id);
+    var id = req.params.id;
+    model.del(id,
+        function (err, results) {
+            if (err) {
+                res.render('error', {
+                    message: err.message,
+                    error: {}
+                });
+            }
+            else {
+                //console.log(results);
+                mgrCommander.del(id);
+
+                res.setHeader('Content-Type', 'application/json');
+                res.status(200).end();
+            }
+        });
 });
 module.exports = router;

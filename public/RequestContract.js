@@ -30,6 +30,10 @@
 
     SGTech.AtlanticCity.RequestContract = __M.module("SGTech.AtlanticCity.RequestContract");
 
+    Object.defineProperty(SGTech.AtlanticCity.RequestContract, 'Context_DeviceId', {
+        value: "deviceId"
+    });
+
     Object.defineProperty(SGTech.AtlanticCity.RequestContract, 'Context_Platform', {
         value: "platform"
     });
@@ -85,8 +89,54 @@
         value: "1"
     });
 
+    Object.defineProperty(SGTech.AtlanticCity.RequestContract, 'ResultCode_CallError', {
+        value: "99"
+    });
+
     Object.defineProperty(SGTech.AtlanticCity.RequestContract, 'ResultCode_ServerInternalException', {
         value: "101"
+    });
+
+    Object.defineProperty(SGTech.AtlanticCity.RequestContract, 'ResultCode_ArgumentException', {
+        value: "102"
+    });
+
+    Object.defineProperty(SGTech.AtlanticCity.RequestContract, 'Platform_Android', {
+        value: "Android"
+    });
+
+    Object.defineProperty(SGTech.AtlanticCity.RequestContract, 'Platform_iOS', {
+        value: "iOS"
+    });
+
+    /**
+     * 平台列舉
+     **/
+    SGTech.AtlanticCity.RequestContract.DevicePlatform = Slice.defineEnum([
+        ['Android', 1], ['iOS', 2]]);
+
+    Object.defineProperty(SGTech.AtlanticCity.RequestContract, 'ThirdPartyType_FB', {
+        value: "FB"
+    });
+
+    Object.defineProperty(SGTech.AtlanticCity.RequestContract, 'ClaimError_CallError', {
+        value: "CallError"
+    });
+
+    Object.defineProperty(SGTech.AtlanticCity.RequestContract, 'ClaimError_Invaild', {
+        value: "InvaildAwardID"
+    });
+
+    Object.defineProperty(SGTech.AtlanticCity.RequestContract, 'ClaimError_AlreadyClaimed', {
+        value: "AlreadyClaimed"
+    });
+
+    Object.defineProperty(SGTech.AtlanticCity.RequestContract, 'ClaimError_Expired', {
+        value: "Expired"
+    });
+
+    Object.defineProperty(SGTech.AtlanticCity.RequestContract, 'ClaimError_Disabled', {
+        value: "Disabled"
     });
     exports.SGTech = SGTech;
 }

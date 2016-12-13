@@ -24,11 +24,16 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
     setting.creationView().fields([
         nga.field('targetCount', 'number').label('工具數量'),
         nga.field('interval', 'number').label('進入數度 ms'),
+        nga.field('stayTime', 'number').label('登入後等待時間 sec'),
         nga.field('method', 'choice').label('登入方式').choices([
             {label: '註冊', value: 'RegisterLogin'},
             {label: '訪客', value: 'GuestLogin'}
         ]),
         nga.field('ice', 'boolean').label('是否登入ice').choices([
+            {value: true, label: 'true'},
+            {value: false, label: 'false'}
+        ]),
+        nga.field('logout', 'boolean').label('是否登出').choices([
             {value: true, label: 'true'},
             {value: false, label: 'false'}
         ]),
@@ -41,11 +46,16 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         ]),
         nga.field('targetCount', 'number').label('工具數量'),
         nga.field('interval', 'number').label('進入數度 ms'),
+        nga.field('stayTime', 'number').label('登入後等待時間 sec'),
         nga.field('method', 'choice').label('登入方式').choices([
             {label: '註冊', value: 'RegisterLogin'},
             {label: '訪客', value: 'GuestLogin'}
         ]),
         nga.field('ice', 'boolean').label('是否登入ice').choices([
+            {value: true, label: 'true'},
+            {value: false, label: 'false'}
+        ]),
+        nga.field('logout', 'boolean').label('是否登出').choices([
             {value: true, label: 'true'},
             {value: false, label: 'false'}
         ]),
@@ -84,14 +94,6 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
     // add the user entity to the admin application
     admin.addEntity(user);
     // attach the admin application to the DOM and execute it
-
-    // var post = nga.entity('posts');
-    // post.listView().fields([
-    //     nga.field('id'),
-    //     nga.field('title'),
-    //     nga.field('userId')
-    // ]);
-    // admin.addEntity(post);
 
     nga.configure(admin);
 }]);
