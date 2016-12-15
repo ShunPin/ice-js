@@ -8,12 +8,12 @@ var mgrCommander = require('../server/MgrCommander');
 mgrCommander.setWebsite('https://www.rd2.atcity.dev');
 
 // 測試 Code , TODO:  Remove
-model.get(null,function (err,array) {
-    for (var i=0; i< array.length; i++){
-        var setting = array[i];
-        mgrCommander.set(setting.id,setting);
-    }
-});
+// model.get(null,function (err,array) {
+//     for (var i=0; i< array.length; i++){
+//         var setting = array[i];
+//         mgrCommander.set(setting.id,setting);
+//     }
+// });
 
 /* GET setting listing. */
 router.get('/', function (req, res, next) {    //res.send('respond with a resource');

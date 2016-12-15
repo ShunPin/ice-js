@@ -10,36 +10,10 @@ var Sequelize = require('sequelize');
 
 function helper() {
     this.isInit = false;
-    this.tb_Settings = {};
+    this.tb_Users = {};
 
     this.init = function () {
         var self = this;
-        //this.settings = [];
-        //this.uuid = 1;
-
-        // // 測試用資料, Todo 移除
-        // this.model = [
-        //     {
-        //         'id': this.uuid++,
-        //         'targetCount': 2,
-        //         'interval': 100,
-        //         'stayTime' : 60,
-        //         'method': 'GuestLogin',
-        //         'ice': true,
-        //         'logout': true,
-        //         'running': false,
-        //     },
-        //     {
-        //         'id': this.uuid++,
-        //         'targetCount': 5,
-        //         'interval': 100,
-        //         'stayTime' : 60,
-        //         'method': 'RegisterLogin',
-        //         'ice': true,
-        //         'logout': true,
-        //         'running': false,
-        //     }
-        // ];
 
         this.sequelizeDB = new Sequelize('database', 'username', 'password', {
             host: 'localhost',
@@ -58,18 +32,11 @@ function helper() {
             storage: 'DB/project.sqlite',
         });
 
-        this.tb_Settings = this.sequelizeDB.define('StressSettings', {
+        this.tb_Users = this.sequelizeDB.define('StressUsers', {
             id: {type: Sequelize.INTEGER, autoIncrement: true, primaryKey: true, unique: true},
-            targetCount: {type: Sequelize.INTEGER, allowNull: false},
-            interval: {type: Sequelize.INTEGER, allowNull: false},
-            stayTime: {type: Sequelize.INTEGER, allowNull: false},
-            method: {type: Sequelize.STRING, allowNull: false},
-            ice: {type: Sequelize.BOOLEAN, defaultValue: true, allowNull: false},
-            logout: {type: Sequelize.BOOLEAN, defaultValue: true, allowNull: false},
-            running: {type: Sequelize.BOOLEAN, defaultValue: false, allowNull: false},
-            // running: {type: Sequelize.VIRTUAL, defaultValue: false, allowNull: false,
-            //     get : function() {this.getDataValue('running') ? this.getDataValue('running') : false}
-            // },
+            MemberId: {type: Sequelize.INTEGER, allowNull: false},
+            DeviceId: {type: Sequelize.TEXT, allowNull: false},
+            LoginToken: {type: Sequelize.TEXT, allowNull: false},
         });
 
         this.sequelizeDB.sync().then(function () {
@@ -82,14 +49,14 @@ function helper() {
 
 helper.prototype.get = function (id, callback) {
     if (id) {
-        this.tb_Settings.find({where: {id: id}}).then(
+        this.tb_Users.find({where: {id: id}}).then(
             function (obj) {
                 if (obj) callback(null, obj);
                 else callback(null, {});
             });
     }
     else {
-        this.tb_Settings.findAll().then(
+        this.tb_Users.findAll().then(
             function (array) {
                 if (array) callback(null, array);
                 else callback(null, {});
@@ -100,7 +67,7 @@ helper.prototype.get = function (id, callback) {
 // 設定設定資訊, 非同步方法
 helper.prototype.set = function (id, value, callback) {
     if (id) {
-        this.tb_Settings.findOrCreate({where: {id: id}}).spread(function (obj) {
+        this.tb_Users.findOrCreate({where: {id: id}}).spread(function (obj) {
             for (var vKey in value) {
                 obj.setDataValue(vKey, value[vKey]);
             }
@@ -111,14 +78,15 @@ helper.prototype.set = function (id, value, callback) {
 
 // 新增資料, 非同步方法
 helper.prototype.add = function (value, callback) {
-    this.tb_Settings.create(value).then(function (obj) {
+    this.tb_Users.create(value).then(function (obj) {
+        console.log('User add OK');
         if (callback instanceof Function) callback(null, obj);
     });
 };
 
 // 刪除設定資訊, 非同步方法
 helper.prototype.del = function (id, callback) {
-    this.tb_Settings.destroy({where: {id: id}}).then(function () {
+    this.tb_Users.destroy({where: {id: id}}).then(function () {
         if (callback instanceof Function) callback(null, null);
     });
 };

@@ -32,15 +32,25 @@ if (!String.prototype.format) {
 }
 
 var commander = Ice.Class({
+    Config : {},
+    Targets : new Array(),
+    status : {
+        running : false,
+        targetCount : 0,
+        finishCount : 0,
+        failCount : 0,
+    },
+
     __init__: function (config) {
         this.Config = config;
-        this.Targets = new Array();
-        // Runner to Index Map
-        this.hashMap = {};
         this.runIndex = -1;
         this.intervalID = undefined;
     },
 
+    // 回報運行狀態
+    report : function () {
+        return JSON.stringify(this.status);
+    },
     /**
      *  要測試 Run 的 constructor
      *  必須 Override
@@ -63,12 +73,14 @@ var commander = Ice.Class({
 
     // start 測試開始
     start: function () {
+        if (this.status.running) return;
+
         log.info("StressCommander [Before],{0}={1}".format("TargetNumber",this.Config.targetCount));
         for (var i=0; i<this.Config.targetCount; i++)
         {
             var runner = this.createRunner();
+            runner.runnerIndex = i;
             this.Targets.push(runner);
-            this.hashMap[runner]=i;
         }
         // 開始
         this._begin();
@@ -76,25 +88,34 @@ var commander = Ice.Class({
 
     // stop 測試停止
     stop: function() {
+        if (this.status.running == false) return;
+
         log.info("StressCommander [STOP]");
         this._stop;
     },
 
     // 當 runner 任務完成時呼叫
     success: function (runner) {
-        var index = this.hashMap[runner];
-        log.info("StressCommander [SUCCESS],{0}#{1}".format("任務完成機器人",index));
+        this.status.finishCount++;
+        log.info("StressCommander [SUCCESS],{0}#{1}".format("任務完成機器人",runner.runnerIndex));
+        if (this.status.finishCount == this.status.targetCount) {
+            this._finish();
+        }
     },
 
     // 當 runner 任務失敗時呼叫
     fail: function (runner) {
-        var index = this.hashMap[runner];
-        log.info("StressCommander [FAIL],{0}#{1}".format("任務失敗機器人",index));
+        this.status.failCount++;
+        log.info("StressCommander [FAIL],{0}#{1}".format("任務失敗機器人",runner.runnerIndex));
     },
 
     // begin() 開始
     _begin : function () {
         log.info("StressCommander [Begin],{0}={1}".format("TargetNumber",this.Config.targetCount));
+        this.status.running = true;
+        this.status.targetCount = this.Config.targetCount;
+        this.status.finishCount = 0;
+        this.status.failCount = 0;
         this.runIndex = 0;
         this.intervalID = setInterval(this._each.bind(this), this.Config.interval);
     },
@@ -109,8 +130,8 @@ var commander = Ice.Class({
             this.runIndex++;
         }
         else {
-            // 完成
-            this._finish()
+            // 停掉 Timer
+            clearInterval(this.intervalID);
         }
     },
 
@@ -128,8 +149,8 @@ var commander = Ice.Class({
             this.intervalID = undefined;
         }
         // Empty Targets
+        this.status.running = false;
         this.Targets.length = 0;
-        this.hashMap = {};
     },
 });
 

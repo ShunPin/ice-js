@@ -24,10 +24,10 @@
     }
 
     var BravoLogin = Ice.Class({
-        __init__: function (deviceID,loginInfo) {
+        __init__: function (deviceID) {
             this.axiosConfig = {withCredentials:true,headers:{}};
             this.DeviceId = deviceID;
-            this.loginInfo = loginInfo;
+            //this.loginInfo = loginInfo;
             this.SessionCookies = [];
             this.RSAKey = {};
             this.AESKey = {Key : "", IV : ""};
@@ -132,6 +132,14 @@
         },
 
         /**
+         * @method logout
+         */
+        logout: function () {
+            // 讓他斷線
+            this.glacier.communicator.destroy();
+        },
+
+        /**
          *  登入處理, 區分 GuestLogin 與 FastLogin
          * @param isGuestLogin
          * @returns {*} Ice.Promise 物件, 成功必導出 MemberCenter.RouterSessionPrx
@@ -149,7 +157,7 @@
                         // guest 登入成功
                         console.log("guest 登入成功");
 
-                        var glacier = new BravoGlacier(self.loginInfo);
+                        var glacier = new BravoGlacier(self.DeviceId,self.loginInfo);
                         self.glacier = glacier;
                         return glacier.createSession();
                     }

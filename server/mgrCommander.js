@@ -22,17 +22,47 @@ StressLoginCommander.prototype.createRunner = function () {
 };
 
 StressLoginCommander.prototype.runAction = function (runner) {
-    var isGuestLogin = (this.Config.method == 'GuestLogin') ? true : false;
+    var self = this;
+    var Ice = require("Ice").Ice;
+    var isGuestLogin = (self.Config.method == 'GuestLogin') ? true : false;
+    var stayTime = self.Config.stayTime * 1000;
+    var setting = self.Config;
+
     runner.createSession(isGuestLogin).then(
         function () {
             // 登入成功
-            console.log("登入成功");
-            this.success(runner);
+            console.log("登入成功, 等待登出秒數",stayTime.toString());
+            // 等待秒數
+            Ice.Promise.delay(stayTime).then(
+                function() {
+                    // 登出
+                    console.log("登出");
+                    runner.logout();
+                    self.success(runner);
+
+                    // 修改狀態，並存檔
+                    setting.running = false;
+                    setting.save();
+
+                    // TODO: 記錄 快速登入的  資訊
+                    var fastLoginInfo = {
+                        "MemberId": runner.loginInfo.MemberId,
+                        "LoginToken": runner.loginInfo.LoginToken,
+                        "DeviceId": runner.DeviceId,
+                    };
+                    console.log("快速登入可用的資訊",JSON.stringify(fastLoginInfo));
+
+                    if (isGuestLogin) {
+                        var user = require('../server/modelUser');
+                        user.add(fastLoginInfo);
+                    }
+                }
+            );
         },
         function (msg) {
             // 登入失敗
             console.log(msg);
-            this.fail(runner);
+            self.fail(runner);
         }
     );
 };
@@ -56,7 +86,7 @@ helper.prototype.set = function (id, value, callback) {
     this.get(id,function (err,obj) {
         if (obj) {
             // 要啟動
-            if (value.running == true && obj.running == false)
+            if (value.running == true && obj.running != true)
             {
                 changeTo = true;
             }
@@ -64,6 +94,12 @@ helper.prototype.set = function (id, value, callback) {
             else if (value.running == false && obj.running == true)
             {
                 changeTo = false;
+            }
+        }
+        else {
+            if (value.running == true)
+            {
+                changeTo = true;
             }
         }
 
