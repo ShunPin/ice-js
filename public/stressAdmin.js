@@ -33,10 +33,10 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
             {value: true, label: 'true'},
             {value: false, label: 'false'}
         ]),
-        nga.field('logout', 'boolean').label('是否登出').choices([
-            {value: true, label: 'true'},
-            {value: false, label: 'false'}
-        ]),
+        // nga.field('logout', 'boolean').label('是否登出').choices([
+        //     {value: true, label: 'true'},
+        //     {value: false, label: 'false'}
+        // ]),
     ]);
 
     setting.editionView().fields([
@@ -55,10 +55,10 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
             {value: true, label: 'true'},
             {value: false, label: 'false'}
         ]),
-        nga.field('logout', 'boolean').label('是否登出').choices([
-            {value: true, label: 'true'},
-            {value: false, label: 'false'}
-        ]),
+        // nga.field('logout', 'boolean').label('是否登出').choices([
+        //     {value: true, label: 'true'},
+        //     {value: false, label: 'false'}
+        // ]),
     ]);
 
     var listFields = setting.editionView().fields();
@@ -69,22 +69,17 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
     admin.addEntity(setting);
 
     var user = nga.entity('users');
-    user.url('http://jsonplaceholder.typicode.com/users');
+    //user.url('http://jsonplaceholder.typicode.com/users');
     // set the fields of the user entity list view
     user.listView().fields([
-        nga.field('name'),
-        nga.field('username'),
-        nga.field('email')
+        nga.field('MemberId'),
+        nga.field('DeviceId'),
+        nga.field('LoginToken')
     ]);
     user.creationView().fields([
-        nga.field('name'),
-        nga.field('username'),
-        nga.field('email', 'email'),
-        nga.field('address.street').label('Street'),
-        nga.field('address.city').label('City'),
-        nga.field('address.zipcode').label('Zipcode'),
-        nga.field('phone'),
-        nga.field('website')
+        nga.field('MemberId'),
+        nga.field('DeviceId'),
+        nga.field('LoginToken')
     ]);
     user.listView().listActions(['edit', 'delete']);
 
