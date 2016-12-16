@@ -11,11 +11,12 @@ var Sequelize = require('sequelize');
 function helper() {
     this.isInit = false;
     this.tb_Users = {};
+    this.offlineUsers = [];
 
     this.init = function () {
         var self = this;
 
-        this.sequelizeDB = new Sequelize('database', 'username', 'password', {
+        self.sequelizeDB = new Sequelize('database', 'username', 'password', {
             host: 'localhost',
             dialect: 'sqlite',
 
@@ -32,14 +33,22 @@ function helper() {
             storage: 'DB/project.sqlite',
         });
 
-        this.tb_Users = this.sequelizeDB.define('StressUsers', {
+        self.tb_Users = this.sequelizeDB.define('StressUsers', {
             id: {type: Sequelize.INTEGER, autoIncrement: true, primaryKey: true, unique: true},
             MemberId: {type: Sequelize.INTEGER, allowNull: false},
             DeviceId: {type: Sequelize.TEXT, allowNull: false},
             LoginToken: {type: Sequelize.TEXT, allowNull: false},
         });
 
-        this.sequelizeDB.sync().then(function () {
+        self.tb_Users.sync().then(function () {
+            // 將 User 匯入 offlineUsers
+            self.tb_Users.findAll().then(
+                function (array) {
+                    for (var i = 0; i < array.length; i++) {
+                        var rawUser = array[i].dataValues;
+                        self.offlineUsers.push(rawUser);
+                    }
+                });
             self.isInit = true;
         });
     };
@@ -89,6 +98,22 @@ helper.prototype.del = function (id, callback) {
     this.tb_Users.destroy({where: {id: id}}).then(function () {
         if (callback instanceof Function) callback(null, null);
     });
+};
+
+/* ************************************************************************
+ Get A Offline User
+ ************************************************************************ */
+helper.prototype.getOffline = function () {
+    if (this.offlineUsers.length > 0) {
+        return this.offlineUsers.shift();
+    }
+    else {
+        return null;
+    }
+};
+
+helper.prototype.addOffline = function (value) {
+    this.offlineUsers.push(value);
 };
 
 /* ************************************************************************

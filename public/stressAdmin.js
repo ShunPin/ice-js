@@ -26,7 +26,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         nga.field('interval', 'number').label('進入數度 ms'),
         nga.field('stayTime', 'number').label('登入後等待時間 sec'),
         nga.field('method', 'choice').label('登入方式').choices([
-            {label: '註冊', value: 'RegisterLogin'},
+            {label: '快速登入', value: 'RegisterLogin'},
             {label: '訪客', value: 'GuestLogin'}
         ]),
         nga.field('ice', 'boolean').label('是否登入ice').choices([
@@ -48,7 +48,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
         nga.field('interval', 'number').label('進入數度 ms'),
         nga.field('stayTime', 'number').label('登入後等待時間 sec'),
         nga.field('method', 'choice').label('登入方式').choices([
-            {label: '註冊', value: 'RegisterLogin'},
+            {label: '快速登入', value: 'RegisterLogin'},
             {label: '訪客', value: 'GuestLogin'}
         ]),
         nga.field('ice', 'boolean').label('是否登入ice').choices([

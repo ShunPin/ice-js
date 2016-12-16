@@ -180,7 +180,7 @@
                         // fast 登入成功
                         console.log("fast 登入成功");
 
-                        var glacier = new BravoGlacier(self.loginInfo);
+                        var glacier = new BravoGlacier(self.DeviceId,self.loginInfo);
                         self.glacier = glacier;
                         return glacier.createSession();
                     }
