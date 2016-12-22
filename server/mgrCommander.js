@@ -12,7 +12,7 @@
 var helper = require('../server/ModelHelper');
 var StressLoginCommander = require('../public/StressCommander');
 
-StressLoginCommander.prototype.createRunner = function () {
+StressLoginCommander.prototype.createRunner = function() {
     var Ice = require("Ice").Ice;
     var BravoLogin = require('../public/bravoLogin').BravoLogin;
     var deviceID = Ice.generateUUID().toString();
@@ -21,7 +21,7 @@ StressLoginCommander.prototype.createRunner = function () {
     return runner;
 };
 
-StressLoginCommander.prototype.runAction = function (runner) {
+StressLoginCommander.prototype.runAction = function(runner) {
     var self = this;
     var Ice = require("Ice").Ice;
     var isGuestLogin = (self.Config.method == 'GuestLogin') ? true : false;
@@ -29,12 +29,20 @@ StressLoginCommander.prototype.runAction = function (runner) {
     var setting = self.Config;
 
     runner.createSession(isGuestLogin).then(
-        function () {
+        function() {
             // 登入成功
-            console.log("登入成功, 等待登出秒數",stayTime.toString());
-            // 等待秒數
-            Ice.Promise.delay(stayTime).then(
-                function() {
+            console.log("登入成功，開始註冊回呼");
+
+            // 登入失敗
+            var _loginfailed = function(msg) {
+                console.log(msg);
+                self.fail(runner);
+            };
+
+            runner.registerAllFunctionalListener().then(function() {
+                console.log("回呼註冊成功");
+
+                Ice.Promise.delay(stayTime).then(function() {
                     // 登出
                     console.log("登出");
                     runner.logout();
@@ -50,19 +58,14 @@ StressLoginCommander.prototype.runAction = function (runner) {
                         "LoginToken": runner.loginInfo.LoginToken,
                         "DeviceId": runner.DeviceId,
                     };
-                    console.log("快速登入可用的資訊",JSON.stringify(fastLoginInfo));
+                    console.log("快速登入可用的資訊", JSON.stringify(fastLoginInfo));
 
-                    if (isGuestLogin) {
+                    if( isGuestLogin ) {
                         var user = require('../server/modelUser');
                         user.add(fastLoginInfo);
                     }
-                }
-            );
-        },
-        function (msg) {
-            // 登入失敗
-            console.log(msg);
-            self.fail(runner);
+                }).exception(_loginfailed);
+            }, _loginfailed);
         }
     );
 };
@@ -72,47 +75,44 @@ StressLoginCommander.prototype.runAction = function (runner) {
  *  設定要登入的 Website URL
  * @param url
  */
-helper.prototype.setWebsite = function (url) {
+helper.prototype.setWebsite = function(url) {
     // 初始化
     this._settings.Website = url;
 };
 
 // 備分 setter, 複寫 setter
 helper.prototype.modelSetter = helper.prototype.set;
-helper.prototype.set = function (id, value, callback) {
+helper.prototype.set = function(id, value, callback) {
     var self = this;
     // 取出原設定, 判斷試 new or update
     var changeTo;
-    this.get(id,function (err,obj) {
-        if (obj) {
+    this.get(id, function(err, obj) {
+        if( obj ) {
             // 要啟動
-            if (value.running == true && obj.running != true)
-            {
+            if( value.running == true && obj.running != true ) {
                 changeTo = true;
             }
             // 要停止
-            else if (value.running == false && obj.running == true)
-            {
+            else if( value.running == false && obj.running == true ) {
                 changeTo = false;
             }
         }
         else {
-            if (value.running == true)
-            {
+            if( value.running == true ) {
                 changeTo = true;
             }
         }
 
-        self.modelSetter(id, value, function (err, obj) {
+        self.modelSetter(id, value, function(err, obj) {
             // 錯誤則不處理
-            if (err) {
-                if (callback instanceof Function) callback(err, obj);
+            if( err ) {
+                if( callback instanceof Function ) callback(err, obj);
             }
             // 成功, 檢查異動
             else {
                 var cmder;
 
-                if (self._commanders.hasOwnProperty(id)) {
+                if( self._commanders.hasOwnProperty(id) ) {
                     cmder = self._commanders[id];
                 }
                 else {
@@ -122,16 +122,15 @@ helper.prototype.set = function (id, value, callback) {
                 }
 
                 // 異動處理
-                if (changeTo == true){
+                if( changeTo == true ) {
                     // 啟動處理
                     cmder.start();
                 }
-                else if (changeTo == false)
-                {
+                else if( changeTo == false ) {
                     // 停止處理
                     cmder.stop();
                 }
-                if (callback instanceof Function) callback(err,obj);
+                if( callback instanceof Function ) callback(err, obj);
             }
         })
     });
@@ -140,16 +139,15 @@ helper.prototype.set = function (id, value, callback) {
 // 備分 deleter, 複寫 deleter
 helper.prototype.modelDeleter = helper.prototype.del;
 // 刪除設定資訊, 非同步方法
-helper.prototype.del = function (id, callback){
+helper.prototype.del = function(id, callback) {
     var self = this;
-    this.modelDeleter(id,function(err,obj) {
-        if (err == null)
-        {
+    this.modelDeleter(id, function(err, obj) {
+        if( err == null ) {
             var cmder = self._commanders[id];
             cmder.stop();
             delete self._commanders[id];
         }
-        if (callback instanceof Function) callback(err,obj);
+        if( callback instanceof Function ) callback(err, obj);
     });
 };
 
@@ -162,8 +160,8 @@ helper.instance = null;
  * Singleton getInstance definition
  * @return singleton class
  */
-helper.getInstance = function () {
-    if (this.instance === null) {
+helper.getInstance = function() {
+    if( this.instance === null ) {
         this.instance = new helper();
         this.instance._settings = {};
         this.instance._commanders = {};
