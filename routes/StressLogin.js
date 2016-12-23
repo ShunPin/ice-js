@@ -101,6 +101,23 @@ router.get('/run',function (req, res, next) {
     res.send('preTest Start...');
 });
 
+// 壓力測試 :: 資訊
+router.get('/infos', function(req, res, next) {
+    // 取得 commander 數量和狀態
+
+    // 初始化
+    var mgrCommander = require('../server/MgrCommander');
+    var cmders = mgrCommander.getCommanders();
+    var info = [];
+    for (var i = 0; i < cmders.length; i++)
+    {
+        info.push(cmders[i].status);
+    }
+
+    res.setHeader('Content-Type', 'application/json');
+    res.json(info);
+});
+
 // 壓力測試 :: 登入
 router.get('/login', function(req, res, next) {
     // 登入 Brave Web Site

@@ -156,29 +156,6 @@ helper.prototype.set = function (id, value, callback) {
             if (callback instanceof Function) callback(err, obj);
         }
     });
-
-    // 取出原設定, 判斷試 new or update
-    // var changeTo;
-    // this.get(id,function (err,obj) {
-    //     if (obj) {
-    //         // 要啟動
-    //         if (value.running == true && obj.running != true)
-    //         {
-    //             changeTo = true;
-    //         }
-    //         // 要停止
-    //         else if (value.running == false && obj.running == true)
-    //         {
-    //             changeTo = false;
-    //         }
-    //     }
-    //     else {
-    //         if (value.running == true)
-    //         {
-    //             changeTo = true;
-    //         }
-    //     }
-    // });
 };
 
 // 備分 deleter, 複寫 deleter
@@ -196,6 +173,15 @@ helper.prototype.del = function (id, callback) {
     });
 };
 
+helper.prototype.getCommanders = function () {
+    var self = this;
+    var values = [];
+
+    for(var key in self._commanders) {
+        values.push(self._commanders[key]);
+    }
+    return values;
+};
 /* ************************************************************************
  SINGLETON CLASS DEFINITION
  ************************************************************************ */

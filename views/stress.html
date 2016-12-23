@@ -42,6 +42,32 @@
 	</div>
 </div>
 
+<script type="text/javascript" src="/bower_components/axios/dist/axios.js"></script>
+<script>
+    // 定時更新
+    setInterval(function () {
+        axios.get('/stressLogin/infos')
+                .then(function (response) {
+                    //console.log(response);
+                    var stressConsole = document.getElementById('stressConsole');
+                    if (stressConsole) {
+                        var infoText = "";
+                        for (var i=0; i< response.data.length; i++) {
+                            infoText += JSON.stringify(response.data[i]);
+                            infoText += '\n';
+                        }
+                        if (infoText.length > 0) {
+                            stressConsole.value = infoText;
+                        }
+                    }
+                })
+                .catch(function (error) {
+                    console.log(error);
+                });
+
+    },2000);
+</script>
+
 <script type="text/javascript" src="bower_components/chart.js/dist/Chart.min.js"></script>
 <script>
 	var ctx = document.getElementById("myChart");
