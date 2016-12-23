@@ -54,14 +54,26 @@ StressLoginCommander.prototype.runAction = function (runner) {
     runner.createSession(isGuestLogin).then(
         function () {
             // 登入成功
-            console.log("登入成功, 等待登出秒數",stayTime.toString());
-            // 等待秒數
-            Ice.Promise.delay(stayTime).then(
-                function() {
+            console.log("登入成功，開始註冊回呼");
+
+            // 登入失敗
+            var _loginfailed = function (msg) {
+                console.log(msg);
+                self.fail(runner);
+            };
+
+            runner.registerAllFunctionalListener().then(function () {
+                console.log("回呼註冊成功");
+
+                Ice.Promise.delay(stayTime).then(function () {
                     // 登出
                     console.log("登出");
                     runner.logout();
                     self.success(runner);
+
+                    // 修改狀態，並存檔
+                    setting.running = false;
+                    setting.save();
 
                     // 記錄 快速登入的  資訊
                     var fastLoginInfo = {
@@ -69,27 +81,36 @@ StressLoginCommander.prototype.runAction = function (runner) {
                         "LoginToken": runner.loginInfo.LoginToken,
                         "DeviceId": runner.DeviceId,
                     };
-                    console.log("快速登入可用的資訊",JSON.stringify(fastLoginInfo));
+                    //console.log("快速登入可用的資訊", JSON.stringify(fastLoginInfo));
 
                     // 加入 DB
                     user.add(fastLoginInfo);
                     // 加入 Offine User Array
                     user.addOffline(fastLoginInfo);
-                }
-            );
+                }).exception(_loginfailed);
+            }, _loginfailed);
         },
-        function (msg) {
+        function () {
             // 登入失敗
-            console.warn(msg);
+            console.error("登入失敗");
             self.fail(runner);
+
+            // 快速登入
+            if (isGuestLogin) {
+
+            }
+            else {
+                // 將快速登入資訊回收
+                // 記錄 快速登入的  資訊
+                var fastLoginInfo = {
+                    "MemberId": runner.loginInfo.MemberId,
+                    "LoginToken": runner.loginInfo.LoginToken,
+                    "DeviceId": runner.DeviceId,
+                };
+                user.addOffline(fastLoginInfo);
+            }
         }
     );
-};
-
-StressLoginCommander.prototype.onFinish = function () {
-    var self = this;
-    self.Config.running = false;
-    self.Config.save();
 };
 
 /**
@@ -132,19 +153,7 @@ helper.prototype.set = function (id, value, callback) {
                 // 停止處理
                 cmder.stop();
             }
-            if (callback instanceof Function) callback(err,obj);
-
-            // // 異動處理
-            // if (changeTo == true){
-            //     // 啟動處理
-            //     cmder.start();
-            // }
-            // else if (changeTo == false)
-            // {
-            //     // 停止處理
-            //     cmder.stop();
-            // }
-            // if (callback instanceof Function) callback(err,obj);
+            if (callback instanceof Function) callback(err, obj);
         }
     });
 
@@ -175,16 +184,15 @@ helper.prototype.set = function (id, value, callback) {
 // 備分 deleter, 複寫 deleter
 helper.prototype.modelDeleter = helper.prototype.del;
 // 刪除設定資訊, 非同步方法
-helper.prototype.del = function (id, callback){
+helper.prototype.del = function (id, callback) {
     var self = this;
-    this.modelDeleter(id,function(err,obj) {
-        if (err == null)
-        {
+    this.modelDeleter(id, function (err, obj) {
+        if (err == null) {
             var cmder = self._commanders[id];
             cmder.stop();
             delete self._commanders[id];
         }
-        if (callback instanceof Function) callback(err,obj);
+        if (callback instanceof Function) callback(err, obj);
     });
 };
 

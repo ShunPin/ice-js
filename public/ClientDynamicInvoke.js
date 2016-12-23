@@ -22,7 +22,7 @@
 {
     var Ice = require("ice").Ice;
     var __M = Ice.__M;
-    var SGTech = require("RouterSession").SGTech;
+    var SGTech = require("../public/RouterSession").SGTech;
     var Slice = Ice.Slice;
 
     SGTech.AtlanticCity = __M.module("SGTech.AtlanticCity");

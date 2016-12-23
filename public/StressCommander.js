@@ -33,10 +33,10 @@ if (!String.prototype.format) {
 
 var commander = Ice.Class({
     Config : {},
-    Targets : new Array(),
     status : {
         running : false,
         targetCount : 0,
+        currentCount : 0,
         finishCount : 0,
         failCount : 0,
     },
@@ -44,13 +44,14 @@ var commander = Ice.Class({
     __init__: function (config) {
         this.Config = config;
         this.runIndex = -1;
-        this.intervalID = undefined;
+        this.intervalID = undefined;    // Timer ID
     },
 
     // 回報運行狀態
     report : function () {
         return JSON.stringify(this.status);
     },
+
     /**
      *  要測試 Run 的 constructor
      *  必須 Override
@@ -70,27 +71,16 @@ var commander = Ice.Class({
         log.error("[Error] you must implement {0}:{1}".format(self.constructor.name,arguments.callee.toString()));
     },
 
-    /**
-     * 完成任務時回報
-     *  必須 Override
-     */
-    onFinish : function () {
-        log.error("[Error] you must implement {0}:{1}".format(self.constructor.name,arguments.callee.toString()));
-    },
-
     // start 測試開始
     start: function () {
         if (this.status.running) return;
 
-        log.info("StressCommander [Before],{0}={1}".format("TargetNumber",this.Config.targetCount));
-        for (var i=0; i<this.Config.targetCount; i++)
-        {
-            var runner = this.createRunner();
-            runner.runnerIndex = i;
-            this.Targets.push(runner);
-        }
         // 開始
         this._begin();
+
+        // 啟動第一隻機器人
+        this._each();
+
     },
 
     // stop 測試停止
@@ -98,29 +88,36 @@ var commander = Ice.Class({
         if (this.status.running == false) return;
 
         log.info("StressCommander [STOP]");
-        this._stop;
+        this._stop();
     },
 
     // 當 runner 任務完成時呼叫
     success: function (runner) {
-        this.status.finishCount++;
         log.info("StressCommander [SUCCESS],{0}#{1}".format("任務完成機器人",runner.runnerIndex));
-        if (this.status.finishCount == this.status.targetCount) {
-            this._finish();
-        }
+
+        this.status.finishCount++;
+        this.status.currentCount--;
+
+        log.info("StressCommander [STATUS]", JSON.stringify(this.status));
     },
 
     // 當 runner 任務失敗時呼叫
     fail: function (runner) {
-        this.status.failCount++;
         log.info("StressCommander [FAIL],{0}#{1}".format("任務失敗機器人",runner.runnerIndex));
+
+        this.status.failCount++;
+        this.status.currentCount--;
+
+        log.info("StressCommander [STATUS]", JSON.stringify(this.status));
     },
 
     // begin() 開始
     _begin : function () {
         log.info("StressCommander [Begin],{0}={1}".format("TargetNumber",this.Config.targetCount));
+
         this.status.running = true;
         this.status.targetCount = this.Config.targetCount;
+        this.status.currentCount = 0;
         this.status.finishCount = 0;
         this.status.failCount = 0;
         this.runIndex = 0;
@@ -129,24 +126,18 @@ var commander = Ice.Class({
 
     // 還沒達到預定數量時，會依照速度設定呼叫
     _each : function () {
-        if (this.runIndex < this.Targets.length)
+        // 檢查是否達到數量
+        if (this.status.currentCount < this.status.targetCount)
         {
-            var runner = this.Targets[this.runIndex];
             log.info("StressCommander [Join],{0}#{1}".format("加入機器人",this.runIndex));
-            this.runAction(runner);
-            this.runIndex++;
+            var runner = this.createRunner();
+            if (runner !=null && runner != undefined) {
+                runner.runnerIndex = this.runIndex;
+                this.runAction(runner);
+                this.status.currentCount++;
+                this.runIndex++;
+            }
         }
-        else {
-            // 停掉 Timer
-            clearInterval(this.intervalID);
-        }
-    },
-
-    // 測試完成
-    _finish : function () {
-        log.info("StressCommander [End],{0}={1}".format("TargetNumber",this.Config.targetCount));
-        this._stop();
-        this.onFinish();
     },
 
     // 停止後處理
@@ -156,9 +147,7 @@ var commander = Ice.Class({
             clearInterval(this.intervalID);
             this.intervalID = undefined;
         }
-        // Empty Targets
         this.status.running = false;
-        this.Targets.length = 0;
     },
 });
 
