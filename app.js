@@ -16,6 +16,8 @@ var helloIce = require('./routes/helloIce');
 var stressLogin = require('./routes/StressLogin');
 var settings = require('./routes/settings');
 
+// Lune: 如果直接用 node command 執行，會發生 unable to verify the first certificate 的問題，所以先設為不檢查
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 var app = express();
 
@@ -95,6 +97,5 @@ app.use(function (err, req, res, next) {
         error: {}
     });
 });
-
 
 module.exports = app;
