@@ -23,6 +23,12 @@
         router: null,
         session: null,
 
+        _getRandomPort: function(begin_port, count) {
+            var min = begin_port;
+            var max = begin_port + count - 1;
+            return Math.floor(Math.random() * (max - min + 1) + min);
+        },
+
         /**
          *  初始化建構式
          * @param loginInfo , 登入需要的資訊, 由 Web Login 取得
@@ -37,8 +43,10 @@
                 this.GlacierConnectionString = loginInfo.GlacierConnectionString;
                 // Node.js runtime, 用來壓測使用
                 if( typeof window === 'undefined' ) {
-                    this.GlacierConnectionString += ":tcp -h 127.0.0.1 -p 8000";
+                    this.GlacierConnectionString += ":tcp -h 127.0.0.1 -p " + this._getRandomPort(8000, 2);
                 }
+
+                console.log("connectionString: " + JSON.stringify(this.GlacierConnectionString));
 
                 //
                 // Initialize the communicator with the Ice.Default.Router property

@@ -80,7 +80,10 @@ helper.prototype.set = function (id, value, callback) {
             for (var vKey in value) {
                 obj.setDataValue(vKey, value[vKey]);
             }
-            obj.save().then(callback(null, obj));
+            obj.save().then(function () {
+                    if (callback instanceof Function) callback(null, obj);
+                }
+            );
         });
     }
 };
@@ -88,7 +91,6 @@ helper.prototype.set = function (id, value, callback) {
 // 新增資料, 非同步方法
 helper.prototype.add = function (value, callback) {
     this.tb_Users.create(value).then(function (obj) {
-        console.log('User add OK');
         if (callback instanceof Function) callback(null, obj);
     });
 };

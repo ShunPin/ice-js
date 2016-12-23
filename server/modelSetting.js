@@ -14,13 +14,10 @@ function helper() {
 
     this.init = function () {
         var self = this;
-        //this.settings = [];
-        //this.uuid = 1;
 
-        // // 測試用資料, Todo 移除
+        // // 測試用資料
         // this.model = [
         //     {
-        //         'id': this.uuid++,
         //         'targetCount': 2,
         //         'interval': 100,
         //         'stayTime' : 60,
@@ -30,18 +27,17 @@ function helper() {
         //         'running': false,
         //     },
         //     {
-        //         'id': this.uuid++,
         //         'targetCount': 5,
         //         'interval': 100,
         //         'stayTime' : 60,
-        //         'method': 'RegisterLogin',
+        //         'method': 'FastLogin',
         //         'ice': true,
         //         'logout': true,
         //         'running': false,
         //     }
         // ];
 
-        this.sequelizeDB = new Sequelize('database', 'username', 'password', {
+        self.sequelizeDB = new Sequelize('database', 'username', 'password', {
             host: 'localhost',
             dialect: 'sqlite',
 
@@ -58,7 +54,7 @@ function helper() {
             storage: 'DB/project.sqlite',
         });
 
-        this.tb_Settings = this.sequelizeDB.define('StressSettings', {
+        self.tb_Settings = this.sequelizeDB.define('StressSettings', {
             id: {type: Sequelize.INTEGER, autoIncrement: true, primaryKey: true, unique: true},
             targetCount: {type: Sequelize.INTEGER, allowNull: false},
             interval: {type: Sequelize.INTEGER, allowNull: false},
@@ -72,7 +68,7 @@ function helper() {
             // },
         });
 
-        this.sequelizeDB.sync().then(function () {
+        self.tb_Settings.sync().then(function () {
             self.isInit = true;
         });
     };
@@ -104,7 +100,10 @@ helper.prototype.set = function (id, value, callback) {
             for (var vKey in value) {
                 obj.setDataValue(vKey, value[vKey]);
             }
-            obj.save().then(callback(null, obj));
+            obj.save().then(function () {
+                    if (callback instanceof Function) callback(null, obj);
+                }
+            );
         });
     }
 };
