@@ -34,15 +34,15 @@ log4js.configure({
             level: "ALL",
             type: "console"
         },
-        {
-            category: "stress",
-            type: "logLevelFilter",
-            level: "INFO",
-            appender: {
-                type: "log4js-elasticsearch",
-                url: "http://log.rd2.atcity.dev:9200/"
-            }
-        },
+        // {
+        //     category: "stress",
+        //     type: "logLevelFilter",
+        //     level: "INFO",
+        //     appender: {
+        //         type: "log4js-elasticsearch",
+        //         url: "http://log.rd2.atcity.dev:9200/"
+        //     }
+        // },
     ],
     //replaceConsole: true
 });
