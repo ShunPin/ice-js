@@ -13,17 +13,40 @@ var helper = require('../server/ModelHelper');
 var StressLoginCommander = require('../public/StressCommander');
 
 StressLoginCommander.prototype.createRunner = function () {
+    var self = this;
     var Ice = require("Ice").Ice;
     var BravoLogin = require('../public/bravoLogin').BravoLogin;
-    var deviceID = Ice.generateUUID().toString();
-    var runner = new BravoLogin(deviceID);
-    runner.setWebsite(helper.getInstance()._settings.Website);
+    var isGuestLogin = (self.Config.method == 'GuestLogin') ? true : false;
+    var runner = null;
+
+    // 快速登入
+    if (isGuestLogin) {
+        var deviceID = Ice.generateUUID().toString();
+        runner = new BravoLogin(deviceID);
+    }
+    else {
+        var user = require('../server/modelUser');
+        var fastLoginInfo = user.getOffline();
+        if (fastLoginInfo) {
+            var deviceID = fastLoginInfo.DeviceId;
+            runner = new BravoLogin(deviceID);
+            runner.loginInfo = fastLoginInfo;
+        }
+        else {
+            console.warn('FastLogin 無可用帳號!!');
+        }
+    }
+
+    if (runner) {
+        runner.setWebsite(helper.getInstance()._settings.Website);
+    }
     return runner;
 };
 
 StressLoginCommander.prototype.runAction = function (runner) {
     var self = this;
     var Ice = require("Ice").Ice;
+    var user = require('../server/modelUser');
     var isGuestLogin = (self.Config.method == 'GuestLogin') ? true : false;
     var stayTime = self.Config.stayTime * 1000;
     var setting = self.Config;
@@ -40,11 +63,7 @@ StressLoginCommander.prototype.runAction = function (runner) {
                     runner.logout();
                     self.success(runner);
 
-                    // 修改狀態，並存檔
-                    setting.running = false;
-                    setting.save();
-
-                    // TODO: 記錄 快速登入的  資訊
+                    // 記錄 快速登入的  資訊
                     var fastLoginInfo = {
                         "MemberId": runner.loginInfo.MemberId,
                         "LoginToken": runner.loginInfo.LoginToken,
@@ -52,19 +71,25 @@ StressLoginCommander.prototype.runAction = function (runner) {
                     };
                     console.log("快速登入可用的資訊",JSON.stringify(fastLoginInfo));
 
-                    if (isGuestLogin) {
-                        var user = require('../server/modelUser');
-                        user.add(fastLoginInfo);
-                    }
+                    // 加入 DB
+                    user.add(fastLoginInfo);
+                    // 加入 Offine User Array
+                    user.addOffline(fastLoginInfo);
                 }
             );
         },
         function (msg) {
             // 登入失敗
-            console.log(msg);
+            console.warn(msg);
             self.fail(runner);
         }
     );
+};
+
+StressLoginCommander.prototype.onFinish = function () {
+    var self = this;
+    self.Config.running = false;
+    self.Config.save();
 };
 
 /**
@@ -81,60 +106,70 @@ helper.prototype.setWebsite = function (url) {
 helper.prototype.modelSetter = helper.prototype.set;
 helper.prototype.set = function (id, value, callback) {
     var self = this;
-    // 取出原設定, 判斷試 new or update
-    var changeTo;
-    this.get(id,function (err,obj) {
-        if (obj) {
-            // 要啟動
-            if (value.running == true && obj.running != true)
-            {
-                changeTo = true;
-            }
-            // 要停止
-            else if (value.running == false && obj.running == true)
-            {
-                changeTo = false;
-            }
+    self.modelSetter(id, value, function (err, obj) {
+        // 錯誤則不處理
+        if (err) {
+            if (callback instanceof Function) callback(err, obj);
         }
+        // 成功, 檢查異動
         else {
-            if (value.running == true)
-            {
-                changeTo = true;
-            }
-        }
+            var cmder;
 
-        self.modelSetter(id, value, function (err, obj) {
-            // 錯誤則不處理
-            if (err) {
-                if (callback instanceof Function) callback(err, obj);
+            if (self._commanders.hasOwnProperty(id)) {
+                cmder = self._commanders[id];
             }
-            // 成功, 檢查異動
             else {
-                var cmder;
-
-                if (self._commanders.hasOwnProperty(id)) {
-                    cmder = self._commanders[id];
-                }
-                else {
-                    // 新增,處理
-                    cmder = new StressLoginCommander(obj);
-                    self._commanders[id] = cmder;
-                }
-
-                // 異動處理
-                if (changeTo == true){
-                    // 啟動處理
-                    cmder.start();
-                }
-                else if (changeTo == false)
-                {
-                    // 停止處理
-                    cmder.stop();
-                }
-                if (callback instanceof Function) callback(err,obj);
+                // 新增,處理
+                cmder = new StressLoginCommander(value);
+                self._commanders[id] = cmder;
             }
-        })
+
+            if (obj.running == true && cmder.status.running == false) {
+                // 啟動處理
+                cmder.start();
+            }
+            else if (obj.running == false && cmder.status.running == true) {
+                // 停止處理
+                cmder.stop();
+            }
+            if (callback instanceof Function) callback(err,obj);
+
+            // // 異動處理
+            // if (changeTo == true){
+            //     // 啟動處理
+            //     cmder.start();
+            // }
+            // else if (changeTo == false)
+            // {
+            //     // 停止處理
+            //     cmder.stop();
+            // }
+            // if (callback instanceof Function) callback(err,obj);
+        }
     });
+
+    // 取出原設定, 判斷試 new or update
+    // var changeTo;
+    // this.get(id,function (err,obj) {
+    //     if (obj) {
+    //         // 要啟動
+    //         if (value.running == true && obj.running != true)
+    //         {
+    //             changeTo = true;
+    //         }
+    //         // 要停止
+    //         else if (value.running == false && obj.running == true)
+    //         {
+    //             changeTo = false;
+    //         }
+    //     }
+    //     else {
+    //         if (value.running == true)
+    //         {
+    //             changeTo = true;
+    //         }
+    //     }
+    // });
 };
 
 // 備分 deleter, 複寫 deleter

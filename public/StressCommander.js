@@ -70,6 +70,13 @@ var commander = Ice.Class({
         log.error("[Error] you must implement {0}:{1}".format(self.constructor.name,arguments.callee.toString()));
     },
 
+    /**
+     * 完成任務時回報
+     *  必須 Override
+     */
+    onFinish : function () {
+        log.error("[Error] you must implement {0}:{1}".format(self.constructor.name,arguments.callee.toString()));
+    },
 
     // start 測試開始
     start: function () {
@@ -139,6 +146,7 @@ var commander = Ice.Class({
     _finish : function () {
         log.info("StressCommander [End],{0}={1}".format("TargetNumber",this.Config.targetCount));
         this._stop();
+        this.onFinish();
     },
 
     // 停止後處理

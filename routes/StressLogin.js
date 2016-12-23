@@ -45,11 +45,11 @@ router.get('/test/:id', function (req, res, next) {    //res.send('respond with 
             });
         }
         else {
-            //console.log(results);
-            // clone obj
-            var newObj = JSON.parse(JSON.stringify(obj));
-            newObj.running = !obj.running;
-            mgrCommander.set(id,newObj);
+            // //console.log(results);
+            // // clone obj
+            // var newObj = JSON.parse(JSON.stringify(obj));
+            // newObj.running = !obj.running;
+            // mgrCommander.set(id,newObj);
             res.status(200).end();
         }
     });
