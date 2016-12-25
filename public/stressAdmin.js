@@ -92,3 +92,46 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
 
     nga.configure(admin);
 }]);
+
+
+myApp.controller('stressInfoCtrl', ['$scope', '$interval',
+    function ($scope, $interval) {
+
+        var checkUpdate = function () {
+            axios.get('/stressLogin/infos')
+                .then(function (response) {
+                    //console.log(response);
+                    // TODO test
+                    var checkLater = false;
+
+                    var infos = [];
+                    for (var i = 0; i < response.data.length; i++) {
+                        var obj = response.data[i];
+                        if (obj.running) {
+                            checkLater = true;
+                            obj.type = "success"
+                        }
+                        else {
+                            obj.type = "active";
+                        }
+                        infos.push(obj);
+                    }
+                    $scope.infos = infos;
+
+                    //  TODO: 檢查是否停掉檢查
+                    // if (timerID && checkLater == false) {
+                    //
+                    // }
+                })
+                .catch(function (error) {
+                    console.log(error);
+                });
+
+        }
+
+        //  立即檢查更新
+        checkUpdate();
+        // 兩秒後在更新
+        timerID = $interval(checkUpdate, 2000);
+
+    }]);
