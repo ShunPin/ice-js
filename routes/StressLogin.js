@@ -10,7 +10,6 @@ var Ice = require("Ice").Ice;
 var Commander = require('../public/StressCommander');
 var BravoLogin = require('../public/bravoLogin').BravoLogin;
 
-var mgrCommander = {};
 /* GET home page. */
 router.get('/', function(req, res, next) {
     res.sendFile(path.resolve(__dirname, '../views/stress.html'));
@@ -19,40 +18,17 @@ router.get('/', function(req, res, next) {
 });
 
 router.get('/test',function (req, res, next) {
-    /**
-     *  generateUUID 測試
-     */
-    // var DeviceId = Ice.generateUUID().toString();
-    // log.debug(DeviceId);
-    // res.send(DeviceId);
 
-    // 初始化
-    mgrCommander = require('../server/MgrCommander');
-    mgrCommander.setWebsite('https://www.rd2.atcity.dev');
-
-    res.send('Setting OK')
+    res.send('test OK')
     res.status(200).end();
 });
 
 router.get('/test/:id', function (req, res, next) {    //res.send('respond with a resource');
     // 測試將 id 內狀態改變 ( Stop <-> Run )
     var id = req.params.id;
-    mgrCommander.get(id,function (err,obj) {
-        if (err) {
-            res.render('error', {
-                message: err.message,
-                error: {}
-            });
-        }
-        else {
-            // //console.log(results);
-            // // clone obj
-            // var newObj = JSON.parse(JSON.stringify(obj));
-            // newObj.running = !obj.running;
-            // mgrCommander.set(id,newObj);
-            res.status(200).end();
-        }
-    });
+
+    res.send('test OK')
+    res.status(200).end();
 });
 
 router.get('/run',function (req, res, next) {
@@ -103,19 +79,34 @@ router.get('/run',function (req, res, next) {
 
 // 壓力測試 :: 資訊
 router.get('/infos', function(req, res, next) {
-    // 取得 commander 數量和狀態
 
+    // 測試假資料
+    // var infos = [];
+    // var cmder = function (_id) {
+    //     this.id = _id;
+    //     this.running = false,
+    //         this.targetCount = Math.floor((Math.random() * 10) + 1);
+    //     this.currentCount =0;
+    //     this.finishCount = 0;
+    //     this.failCount = 0;
+    //     this.type = "active"
+    // };
+    //
+    // for (var i=0;i<5;i++) {
+    //     var cmd = new cmder(i);
+    //     if (cmd.targetCount > 5) {
+    //         cmd.type = "success"
+    //     }
+    //     infos.push(cmd);
+    // }
+
+
+    // 取得 Commander 數量和狀態
     // 初始化
-    var mgrCommander = require('../server/MgrCommander');
+    var mgrCommander = require('../server/mgrCommander');
     var cmders = mgrCommander.getCommanders();
-    var info = [];
-    for (var i = 0; i < cmders.length; i++)
-    {
-        info.push(cmders[i].status);
-    }
-
     res.setHeader('Content-Type', 'application/json');
-    res.json(info);
+    res.json(cmders);
 });
 
 // 壓力測試 :: 登入
