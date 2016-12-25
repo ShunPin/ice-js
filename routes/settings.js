@@ -4,7 +4,7 @@
 var express = require('express');
 var router = express.Router();
 var model = require('../server/modelSetting');
-var mgrCommander = require('../server/MgrCommander');
+var mgrCommander = require('../server/mgrCommander');
 mgrCommander.setWebsite('https://www.rd1.atcity.dev');
 
 // 測試 Code , TODO:  Remove
