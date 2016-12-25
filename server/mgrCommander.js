@@ -62,6 +62,7 @@ ClassHelper.prototype.set = function (id, value, callback) {
         if (this._commanders.hasOwnProperty(id) == false) {
             // 新增 Commander , value 為 config
             this._commanders[id] = new Commander(value);
+            this._commanders[id].setWebsite(this._settings.Website);
         }
         var cmder = this._commanders[id];
 
