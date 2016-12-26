@@ -94,6 +94,147 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
 }]);
 
 
+myApp.controller('stressChartCtrl', ['$scope', '$interval',
+    function ($scope, $interval) {
+        "use strict";
+
+        function requestData() {
+            axios.get('/stressLogin/infos')
+                .then(function (response) {
+                    // 設定的 pointer data 為 { date time , current Count}
+                    var dateNow = new Date().getTime();
+
+                    // 記錄 Chart Map(Name,Data)
+                    var chartMap1 = {};
+                    for (var i = 0; i < chart1.series.length; i++) {
+                        var name = chart1.series[i].name;
+                        var series = chart1.series[i];
+                        // add to map
+                        chartMap1[name] = series;
+                    }
+
+                    var chartMap2 = {};
+                    for (var i = 0; i < chart2.series.length; i++) {
+                        var name = chart2.series[i].name;
+                        var series = chart2.series[i];
+                        // add to map
+                        chartMap2[name] = series;
+                    }
+
+                    // 記錄 response Map(Name,Data)
+                    for (var i = 0; i < response.data.length; i++) {
+                        var pointName = response.data[i].id;
+                        var successName = pointName + "-" + "success";
+                        var failName = pointName + "-" + "fail";
+
+                        // 新增 線 (addSeries)
+                        if (chartMap1.hasOwnProperty(pointName) == false) {
+                            chartMap1[pointName] = chart1.addSeries({name: pointName, data: []}, false);
+                            chartMap2[successName] = chart2.addSeries({name: successName, data: []}, false);
+                            chartMap2[failName] = chart2.addSeries({name: failName, data: []}, false);
+                        }
+
+                        // 新增 顯示的資料
+                        var point1 = {
+                            name: pointName,
+                            data: [dateNow, Math.random() * 100]
+                            // data: [dateNow, response.data[i].currentCount]
+                        };
+
+                        var successPoint = {
+                            name: successName,
+                            // data: [dateNow, Math.random() * 100]
+                            data: [dateNow, response.data[i].finishCount]
+                        };
+
+                        var failPoint = {
+                            name: failName,
+                            // data: [dateNow, Math.random() * 100]
+                            data: [dateNow, response.data[i].failCount]
+                        };
+
+                        // shift if the series is
+                        // longer than 20
+                        var shift = chartMap1[pointName].data.length > 20;
+
+                        // add the point
+                        chartMap1[pointName].addPoint(point1.data, false, shift);
+                        chartMap2[successName].addPoint(successPoint.data, false, shift);
+                        chartMap2[failName].addPoint(failPoint.data, false, shift);
+                    }
+
+                    chart1.redraw();
+                    chart2.redraw();
+                })
+                .catch(function (error) {
+                    console.log(error);
+                });
+        }
+
+        // 每10 秒更新
+        $interval(requestData, 10000);
+
+        Highcharts.setOptions({
+            global: {
+                useUTC: false
+            }
+        });
+
+        var chart1 = $scope.chart1 = Highcharts.chart('myChart1', {
+            chart: {
+                renderTo: 'container',
+                defaultSeriesType: 'spline',
+                events: {
+                    load: requestData
+                }
+            },
+            title: {
+                text: '壓測線圖-人數'
+            },
+            xAxis: {
+                type: 'datetime',
+                //tickInterval: 30 * 1000,
+                //maxZoom: 20 * 1000
+            },
+            yAxis: {
+                minPadding: 0.2,
+                maxPadding: 0.2,
+                title: {
+                    text: 'Value',
+                    margin: 80
+                }
+            },
+            series: [{}]
+        });
+
+        var chart2 = $scope.chart1 = Highcharts.chart('myChart2', {
+            chart: {
+                renderTo: 'container',
+                defaultSeriesType: 'spline',
+                events: {
+                    load: requestData
+                }
+            },
+            title: {
+                text: '壓測線圖-成功vs失敗'
+            },
+            xAxis: {
+                type: 'datetime',
+                //tickInterval: 30 * 1000,
+                //maxZoom: 20 * 1000
+            },
+            yAxis: {
+                minPadding: 0.2,
+                maxPadding: 0.2,
+                title: {
+                    text: 'Value',
+                    margin: 80
+                }
+            },
+            series: [{}]
+        });
+    }]);
+
 myApp.controller('stressInfoCtrl', ['$scope', '$interval',
     function ($scope, $interval) {
 
