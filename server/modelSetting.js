@@ -69,7 +69,12 @@ function helper() {
         });
 
         self.tb_Settings.sync().then(function () {
-            self.isInit = true;
+            // 將所有 running 狀態設為 false
+            self.tb_Settings.update({running:false},{where: {running:true}}).then(
+                function () {
+                    self.isInit = true;
+                }
+            );
         });
     };
 

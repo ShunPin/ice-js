@@ -8,6 +8,7 @@ var method = Commander.prototype = Object.create(_super);
 
 function Commander() {
     _super.constructor.apply(this, arguments);
+    this._settings = {};
 }
 
 method.setWebsite = function (url) {

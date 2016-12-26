@@ -3,7 +3,7 @@
  */
 
 // 這是一個資料(model)類別
-'use strict'
+'use strict';
 
 // ORM - Sequelize
 var Sequelize = require('sequelize');
