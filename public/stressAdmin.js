@@ -137,8 +137,8 @@ myApp.controller('stressChartCtrl', ['$scope', '$interval',
                         // 新增 顯示的資料
                         var point1 = {
                             name: pointName,
-                            data: [dateNow, Math.random() * 100]
-                            // data: [dateNow, response.data[i].currentCount]
+                            // data: [dateNow, Math.random() * 100]
+                            data: [dateNow, response.data[i].currentCount]
                         };
 
                         var successPoint = {
@@ -154,8 +154,8 @@ myApp.controller('stressChartCtrl', ['$scope', '$interval',
                         };
 
                         // shift if the series is
-                        // longer than 20
-                        var shift = chartMap1[pointName].data.length > 20;
+                        // longer than 200
+                        var shift = chartMap1[pointName].data.length > 200;
 
                         // add the point
                         chartMap1[pointName].addPoint(point1.data, false, shift);
