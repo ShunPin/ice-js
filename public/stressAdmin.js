@@ -97,14 +97,14 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
 myApp.controller('stressInfoCtrl', ['$scope', '$interval',
     function ($scope, $interval) {
 
-        var checkUpdate = function () {
+        var timeID;
+        $scope.running = false;
+
+        $scope.checkUpdate = function () {
             axios.get('/stressLogin/infos')
                 .then(function (response) {
-                    //console.log(response);
-                    // TODO test
-                    var checkLater = false;
-
                     var infos = [];
+                    var checkLater = false;
                     for (var i = 0; i < response.data.length; i++) {
                         var obj = response.data[i];
                         if (obj.running) {
@@ -117,21 +117,60 @@ myApp.controller('stressInfoCtrl', ['$scope', '$interval',
                         infos.push(obj);
                     }
                     $scope.infos = infos;
+                    $scope.running = checkLater;
 
-                    //  TODO: 檢查是否停掉檢查
-                    // if (timerID && checkLater == false) {
-                    //
-                    // }
                 })
                 .catch(function (error) {
                     console.log(error);
                 });
+        };
 
-        }
+        $scope.startUpdate = function () {
+            "use strict";
+            timeID = $interval($scope.checkUpdate, 2000);
+        };
+
+        $scope.stopUpdate = function () {
+            "use strict";
+            $interval.cancel(timeID);
+            timeID = undefined;
+        };
 
         //  立即檢查更新
-        checkUpdate();
+        $scope.checkUpdate();
         // 兩秒後在更新
-        timerID = $interval(checkUpdate, 2000);
+        $scope.startUpdate();
+
+        // 啟動所有設定
+        $scope.startAll = function () {
+            "use strict";
+            console.log("StartAll clicked");
+
+            axios.get('/stressLogin/startAll')
+                .then(function (response) {
+
+
+                })
+                .catch(function (error) {
+                    console.log(error);
+                });
+        };
+
+        // 停止所有設定
+        $scope.stopAll = function () {
+            "use strict";
+            console.log("StopAll clicked");
+
+            axios.get('/stressLogin/stopAll')
+                .then(function (response) {
+                    if (response.status == 200) {
+                        console.log('設定成功');
+                    }
+
+                })
+                .catch(function (error) {
+                    console.log(error);
+                });
+        };
 
     }]);

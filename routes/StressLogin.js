@@ -11,13 +11,13 @@ var Commander = require('../public/StressCommander');
 var BravoLogin = require('../public/bravoLogin').BravoLogin;
 
 /* GET home page. */
-router.get('/', function(req, res, next) {
+router.get('/', function (req, res, next) {
     res.sendFile(path.resolve(__dirname, '../views/stress.html'));
 
     // TODO:  整合  Kibana  view
 });
 
-router.get('/test',function (req, res, next) {
+router.get('/test', function (req, res, next) {
 
     res.send('test OK')
     res.status(200).end();
@@ -31,7 +31,7 @@ router.get('/test/:id', function (req, res, next) {    //res.send('respond with 
     res.status(200).end();
 });
 
-router.get('/run',function (req, res, next) {
+router.get('/run', function (req, res, next) {
 
     var websiteURL = 'https://www.rd2.atcity.dev';
     //var websiteURL = req.body.websiteURL;
@@ -49,7 +49,7 @@ router.get('/run',function (req, res, next) {
     // 額外行為
 
     // TODO : Parse req.body to config
-    log.info('Login Test Start...',config);
+    log.info('Login Test Start...', config);
 
     var commander = new Commander(config);
     commander.createRunner = function () {
@@ -77,8 +77,70 @@ router.get('/run',function (req, res, next) {
     res.send('preTest Start...');
 });
 
+// 啟動所有的壓測項目
+router.get('/startAll', function (req, res, next) {
+    var model = require('../server/modelSetting');
+    var mgrCommander = require('../server/mgrCommander');
+
+    // 查詢所有設定
+    model.get(null,
+        function (err, results) {
+            if (err) {
+                res.render('error', {
+                    message: err.message,
+                    error: {}
+                });
+            }
+            else {
+                //console.log(results);
+                for (var i = 0; i < results.length; i++){
+                    if (results[i].running == false) {
+                        // 改成 running
+                        results[i].running = true;
+                        results[i].save();
+                        mgrCommander.set(results[i].id,results[i]);
+                    }
+                }
+
+                res.setHeader('Content-Type', 'application/json');
+                res.json(results);
+            }
+        });
+});
+
+// 停止所有的壓測項目
+router.get('/stopAll', function (req, res, next) {
+    var model = require('../server/modelSetting');
+    var mgrCommander = require('../server/mgrCommander');
+
+    // 查詢所有設定
+    model.get(null,
+        function (err, results) {
+            if (err) {
+                res.render('error', {
+                    message: err.message,
+                    error: {}
+                });
+            }
+            else {
+                //console.log(results);
+                for (var i = 0; i < results.length; i++){
+                    if (results[i].running == true) {
+                        // 改成 running
+                        results[i].running = false;
+                        results[i].save();
+                        mgrCommander.set(results[i].id,results[i]);
+                    }
+                }
+
+                res.setHeader('Content-Type', 'application/json');
+                res.json(results);
+            }
+        });
+});
+
 // 壓力測試 :: 資訊
-router.get('/infos', function(req, res, next) {
+router.get('/infos', function (req, res, next) {
 
     // 測試假資料
     // var infos = [];
@@ -110,7 +172,7 @@ router.get('/infos', function(req, res, next) {
 });
 
 // 壓力測試 :: 登入
-router.get('/login', function(req, res, next) {
+router.get('/login', function (req, res, next) {
     // 登入 Brave Web Site
 
     // TODO: 修改成帶參數
@@ -130,7 +192,7 @@ router.get('/login', function(req, res, next) {
     // 額外行為
 
     // TODO : Parse req.body to config
-    log.info('Login Test Start...',config);
+    log.info('Login Test Start...', config);
 
     var commander = new Commander(config);
     commander.createRunner = function () {
@@ -183,7 +245,7 @@ router.get('/login', function(req, res, next) {
     );
 
     console.log(BravoLogin);
-    res.send("login to"+websiteURL);
+    res.send("login to" + websiteURL);
 });
 
 module.exports = router;
