@@ -1,6 +1,6 @@
 {
 	"name": "iceCheck",
-	"version": "0.18.1",
+	"version": "v0.18.1",
 	"private": true,
 	"scripts": {
 		"start": "node ./bin/www"
