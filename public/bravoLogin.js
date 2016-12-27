@@ -164,7 +164,7 @@
 
     BravoLogin.prototype.registerAllFunctionalListener = function () {
         var promise = new Ice.Promise();
-        Ice.Promise.all(this.CallbackableProxyList.map(proxy =>
+        Ice.Promise.all(BravoLogin.CallbackableProxyList.map(proxy =>
             this._registerFunctionalListener(proxy[0], (method, result, data) => {
                 // console.log("=================== [" + proxy[0] + "] ===================");
                 // console.log("Method: " + method);

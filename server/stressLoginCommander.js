@@ -60,7 +60,7 @@ method.runAction = function (runner) {
             // 登入成功
             console.log("登入成功，開始註冊回呼");
 
-            // 登入失敗
+            // 登入失敗處理 function
             var _loginfailed = function (msg) {
                 console.log(msg);
                 self.fail(runner);
