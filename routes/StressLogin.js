@@ -129,8 +129,8 @@ router.get('/stopAll', function (req, res, next) {
                         // 改成 running
                         results[i].running = false;
                         results[i].save();
-                        mgrCommander.set(results[i].id,results[i]);
                     }
+                    mgrCommander.set(results[i].id,results[i]);
                 }
 
                 res.setHeader('Content-Type', 'application/json');
