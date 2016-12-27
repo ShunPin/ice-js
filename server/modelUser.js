@@ -65,7 +65,7 @@ helper.prototype.get = function (id, callback) {
             });
     }
     else {
-        this.tb_Users.findAll().then(
+        this.tb_Users.findAll({ limit: 50 }).then(
             function (array) {
                 if (array) callback(null, array);
                 else callback(null, {});
