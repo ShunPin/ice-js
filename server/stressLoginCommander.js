@@ -71,7 +71,7 @@ method.runAction = function (runner) {
 
                 Ice.Promise.delay(stayTime).then(function () {
                     // 登出
-                    console.log("登出");
+                    //console.log("登出");
                     runner.logout();
                     self.success(runner);
 

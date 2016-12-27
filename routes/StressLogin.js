@@ -139,6 +139,13 @@ router.get('/stopAll', function (req, res, next) {
         });
 });
 
+// 關閉服務 shutdown
+router.get('/shutdown', function (req, res, next) {
+    res.send('shutdown now!!')
+    res.status(200).end();
+    process.exit();
+});
+
 // 壓力測試 :: 資訊
 router.get('/infos', function (req, res, next) {
 

@@ -167,7 +167,7 @@ myApp.controller('stressChartCtrl', ['$scope', '$interval',
                     chart2.redraw();
                 })
                 .catch(function (error) {
-                    console.log(error);
+                    console.error(error);
                 });
         }
 
@@ -233,6 +233,18 @@ myApp.controller('stressChartCtrl', ['$scope', '$interval',
             },
             series: [{}]
         });
+
+        $scope.shutdown = function () {
+            axios.get('/stressLogin/shutdown')
+                .then(function (response) {
+                    if (response.status == 200) {
+                        alert('關機設定成功');
+                    }
+                })
+                .catch(function (error) {
+                    console.error(error);
+                });
+        }
     }]);
 
 myApp.controller('stressInfoCtrl', ['$scope', '$interval',
@@ -259,10 +271,9 @@ myApp.controller('stressInfoCtrl', ['$scope', '$interval',
                     }
                     $scope.infos = infos;
                     $scope.running = checkLater;
-
                 })
                 .catch(function (error) {
-                    console.log(error);
+                    console.error(error);
                 });
         };
 
@@ -289,11 +300,12 @@ myApp.controller('stressInfoCtrl', ['$scope', '$interval',
 
             axios.get('/stressLogin/startAll')
                 .then(function (response) {
-
-
+                    if (response.status == 200) {
+                        console.log('設定成功');
+                    }
                 })
                 .catch(function (error) {
-                    console.log(error);
+                    console.error(error);
                 });
         };
 
@@ -307,10 +319,9 @@ myApp.controller('stressInfoCtrl', ['$scope', '$interval',
                     if (response.status == 200) {
                         console.log('設定成功');
                     }
-
                 })
                 .catch(function (error) {
-                    console.log(error);
+                    console.error(error);
                 });
         };
 

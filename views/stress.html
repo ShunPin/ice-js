@@ -14,12 +14,14 @@
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h4 class="panel-title">
-                        展開圖表 <input type="checkbox" ng-model="showChart"><br/>
+                        展開圖表 <input type="checkbox" ng-model="showChart">
                     </h4>
                 </div>
+
             </div>
 
             <div class="panel-body" ng-show="showChart">
+                <button type="button" ng-click="shutdown()" class="btn btn-danger pull-right">Shutdown Server</button>
                 <div class="col-lg-6 col-md-6">
                     <id id="myChart1">Placeholder for HighCharts</id>
                 </div>
