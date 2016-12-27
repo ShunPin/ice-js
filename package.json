@@ -1,28 +1,28 @@
 {
-  "name": "iceCheck",
-  "version": "0.0.0",
-  "private": true,
-  "scripts": {
-    "start": "node ./bin/www"
-  },
-  "dependencies": {
-    "axios": "^0.14.0",
-    "body-parser": "~1.15.1",
-    "cookie-parser": "~1.4.3",
-    "cryptico-js": "^1.1.0",
-    "crypto-js": "^3.1.6",
-    "debug": "~2.2.0",
-    "express": "~4.13.4",
-    "ice": "^3.6.2",
-    "jade": "~1.11.0",
-    "log4js": "^1.0.1",
-    "log4js-elasticsearch": "0.0.8",
-    "morgan": "~1.7.0",
-    "ng-admin": "^1.0.0-beta3",
-    "requirejs": "^2.3.2",
-    "sequelize": "^3.27.0",
-    "serve-favicon": "~2.3.0",
-    "sqlite3": "^3.1.8"
-  },
-  "devDependencies": {}
+	"name": "iceCheck",
+	"version": "0.18.1",
+	"private": true,
+	"scripts": {
+		"start": "node ./bin/www"
+	},
+	"dependencies": {
+		"axios": "^0.14.0",
+		"body-parser": "~1.15.1",
+		"cookie-parser": "~1.4.3",
+		"cryptico-js": "^1.1.0",
+		"crypto-js": "^3.1.6",
+		"debug": "~2.2.0",
+		"express": "~4.13.4",
+		"ice": "^3.6.2",
+		"jade": "~1.11.0",
+		"log4js": "^1.0.1",
+		"log4js-elasticsearch": "0.0.8",
+		"morgan": "~1.7.0",
+		"ng-admin": "^1.0.0-beta3",
+		"requirejs": "^2.3.2",
+		"sequelize": "^3.27.0",
+		"serve-favicon": "~2.3.0",
+		"sqlite3": "^3.1.8"
+	},
+	"devDependencies": {}
 }
