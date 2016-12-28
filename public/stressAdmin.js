@@ -154,8 +154,8 @@ myApp.controller('stressChartCtrl', ['$scope', '$interval',
                         };
 
                         // shift if the series is
-                        // longer than 200
-                        var shift = chartMap1[pointName].data.length > 200;
+                        // max 24Hr
+                        var shift = chartMap1[pointName].data.length > (24*3600/10);
 
                         // add the point
                         chartMap1[pointName].addPoint(point1.data, false, shift);
@@ -167,7 +167,7 @@ myApp.controller('stressChartCtrl', ['$scope', '$interval',
                     chart2.redraw();
                 })
                 .catch(function (error) {
-                    console.log(error);
+                    console.error(error);
                 });
         }
 
@@ -182,8 +182,8 @@ myApp.controller('stressChartCtrl', ['$scope', '$interval',
 
         var chart1 = $scope.chart1 = Highcharts.chart('myChart1', {
             chart: {
-                renderTo: 'container',
                 defaultSeriesType: 'spline',
+                zoomType: 'x',
                 events: {
                     load: requestData
                 }
@@ -193,7 +193,7 @@ myApp.controller('stressChartCtrl', ['$scope', '$interval',
             },
             xAxis: {
                 type: 'datetime',
-                //tickInterval: 30 * 1000,
+                tickInterval: 60 * 1000,  // 1min
                 //maxZoom: 20 * 1000
             },
             yAxis: {
@@ -209,8 +209,8 @@ myApp.controller('stressChartCtrl', ['$scope', '$interval',
 
         var chart2 = $scope.chart1 = Highcharts.chart('myChart2', {
             chart: {
-                renderTo: 'container',
                 defaultSeriesType: 'spline',
+                zoomType: 'x',
                 events: {
                     load: requestData
                 }
@@ -220,7 +220,7 @@ myApp.controller('stressChartCtrl', ['$scope', '$interval',
             },
             xAxis: {
                 type: 'datetime',
-                //tickInterval: 30 * 1000,
+                tickInterval: 60 * 1000,  // 1min
                 //maxZoom: 20 * 1000
             },
             yAxis: {
@@ -233,6 +233,18 @@ myApp.controller('stressChartCtrl', ['$scope', '$interval',
             },
             series: [{}]
         });
+
+        $scope.shutdown = function () {
+            axios.get('/stressLogin/shutdown')
+                .then(function (response) {
+                    if (response.status == 200) {
+                        alert('關機設定成功');
+                    }
+                })
+                .catch(function (error) {
+                    console.error(error);
+                });
+        }
     }]);
 
 myApp.controller('stressInfoCtrl', ['$scope', '$interval',
@@ -259,10 +271,9 @@ myApp.controller('stressInfoCtrl', ['$scope', '$interval',
                     }
                     $scope.infos = infos;
                     $scope.running = checkLater;
-
                 })
                 .catch(function (error) {
-                    console.log(error);
+                    console.error(error);
                 });
         };
 
@@ -289,11 +300,12 @@ myApp.controller('stressInfoCtrl', ['$scope', '$interval',
 
             axios.get('/stressLogin/startAll')
                 .then(function (response) {
-
-
+                    if (response.status == 200) {
+                        console.log('設定成功');
+                    }
                 })
                 .catch(function (error) {
-                    console.log(error);
+                    console.error(error);
                 });
         };
 
@@ -307,10 +319,9 @@ myApp.controller('stressInfoCtrl', ['$scope', '$interval',
                     if (response.status == 200) {
                         console.log('設定成功');
                     }
-
                 })
                 .catch(function (error) {
-                    console.log(error);
+                    console.error(error);
                 });
         };
 
