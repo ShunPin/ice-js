@@ -23,7 +23,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
     // });
     setting.creationView().fields([
         nga.field('targetCount', 'number').label('工具數量'),
-        nga.field('interval', 'number').label('進入數度 ms'),
+        nga.field('interval', 'number').label('進入速度 ms'),
         nga.field('stayTime', 'number').label('登入後等待時間 sec'),
         nga.field('method', 'choice').label('登入方式').choices([
             {label: '快速登入', value: 'FastLogin'},
@@ -45,7 +45,7 @@ myApp.config(['NgAdminConfigurationProvider', function (nga) {
             {label: 'Stop', value: false}
         ]),
         nga.field('targetCount', 'number').label('工具數量'),
-        nga.field('interval', 'number').label('進入數度 ms'),
+        nga.field('interval', 'number').label('進入速度 ms'),
         nga.field('stayTime', 'number').label('登入後等待時間 sec'),
         nga.field('method', 'choice').label('登入方式').choices([
             {label: '快速登入', value: 'FastLogin'},

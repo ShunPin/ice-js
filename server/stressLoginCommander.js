@@ -11,11 +11,11 @@ function Commander() {
     this._settings = {};
 }
 
-method.setWebsite = function (url) {
+method.setWebsite = function(url) {
     this._settings.Website = url;
 };
 
-method.createRunner = function () {
+method.createRunner = function() {
     var self = this;
     var Ice = require("Ice").Ice;
     var BravoLogin = require('../public/bravoLogin').BravoLogin;
@@ -24,14 +24,14 @@ method.createRunner = function () {
     var runner = null;
 
     // 快速登入
-    if (isGuestLogin) {
+    if( isGuestLogin ) {
         deviceID = Ice.generateUUID().toString();
         runner = new BravoLogin(deviceID);
     }
     else {
         var user = require('../server/modelUser');
         var fastLoginInfo = user.getOffline();
-        if (fastLoginInfo) {
+        if( fastLoginInfo ) {
             deviceID = fastLoginInfo.DeviceId;
             runner = new BravoLogin(deviceID);
             runner.loginInfo = fastLoginInfo;
@@ -41,13 +41,13 @@ method.createRunner = function () {
         }
     }
 
-    if (runner) {
+    if( runner ) {
         runner.setWebsite(self._settings.Website);
     }
     return runner;
 };
 
-method.runAction = function (runner) {
+method.runAction = function(runner) {
     var self = this;
     var Ice = require("Ice").Ice;
     var user = require('../server/modelUser');
@@ -56,20 +56,20 @@ method.runAction = function (runner) {
     var setting = self.Config;
 
     runner.createSession(isGuestLogin).then(
-        function () {
+        function() {
             // 登入成功
             console.log("登入成功，開始註冊回呼");
 
             // 登入失敗處理 function
-            var _loginfailed = function (msg) {
+            var failureHandler = function(msg) {
                 console.log(msg);
-                self.fail(runner);
+                throw msg;
             };
 
-            runner.registerAllFunctionalListener().then(function () {
+            runner.registerAllFunctionalListener().then(function() {
                 console.log("回呼註冊成功");
 
-                Ice.Promise.delay(stayTime).then(function () {
+                Ice.Promise.delay(stayTime).then(function() {
                     // 登出
                     //console.log("登出");
                     runner.logout();
@@ -91,30 +91,36 @@ method.runAction = function (runner) {
                     user.add(fastLoginInfo);
                     // 加入 Offine User Array
                     user.addOffline(fastLoginInfo);
-                }).exception(_loginfailed);
-            }, _loginfailed);
+                }).exception(failureHandler);
+            }, failureHandler);
         },
-        function () {
+        function() {
             // 登入失敗
-            console.error("登入失敗");
-            self.fail(runner);
+            // console.error("登入失敗");
+            throw "runner.createSession::登入失敗";
 
-            // 快速登入
-            if (isGuestLogin) {
-
-            }
-            else {
-                // 將快速登入資訊回收
-                // 記錄 快速登入的  資訊
-                var fastLoginInfo = {
-                    "MemberId": runner.loginInfo.MemberId,
-                    "LoginToken": runner.loginInfo.LoginToken,
-                    "DeviceId": runner.DeviceId,
-                };
-                user.addOffline(fastLoginInfo);
-            }
+            // Lune: 失敗應該不用記錄資訊吧？ ..
+            // // 快速登入
+            // if( isGuestLogin ) {
+            //
+            // }
+            // else {
+            //     // 將快速登入資訊回收
+            //     // 記錄 快速登入的  資訊
+            //     var fastLoginInfo = {
+            //         "MemberId": runner.loginInfo.MemberId,
+            //         "LoginToken": runner.loginInfo.LoginToken,
+            //         "DeviceId": runner.DeviceId,
+            //     };
+            //     user.addOffline(fastLoginInfo);
+            // }
         }
-    );
+    ).exception(function(error) {
+        console.log(error);
+
+        runner.logout();
+        self.fail(runner);
+    });
 };
 
 module.exports = Commander;
