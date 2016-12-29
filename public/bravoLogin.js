@@ -1,3 +1,6 @@
+var logger = require("log4js").getLogger("stress");
+var filelogger = require("log4js").getLogger("stressFile");
+
 (function(module, require, exports) {
     //axios.defaults.withCredentials = true;
     var RequestContract = require('../public/RequestContract').SGTech.AtlanticCity.RequestContract;
@@ -114,8 +117,6 @@
                 // success
                 var result_code = response.data.result_code;
                 if( result_code && result_code == "OK" ) {
-                    //console.log("API_Call::OK");
-
                     // 取出 result_data
                     var result_data = response.data.result_data;
 
@@ -150,7 +151,7 @@
                 }
             })
             .catch(function(error) {
-                throw error.toString();
+                promise.fail(error);
             });
 
         return promise;
@@ -171,11 +172,11 @@
         var promise = new Ice.Promise();
         Ice.Promise.all(BravoLogin.CallbackableProxyList.map(proxy =>
             this._registerFunctionalListener(proxy[0], (method, result, data) => {
-                // console.log("=================== [" + proxy[0] + "] ===================");
-                // console.log("Method: " + method);
-                // console.log("Result: " + JSON.stringify(result));
-                // console.log("Data: " + JSON.stringify(data));
-                // console.log("###################");
+                logger.trace("=================== [" + proxy[0] + "] ===================");
+                logger.trace("Method: " + method);
+                logger.trace("Result: " + JSON.stringify(result));
+                logger.trace("Data: " + JSON.stringify(data));
+                logger.trace("###################");
             }, proxy[1])
         )).then(() => promise.succeed()).exception(() => promise.fail());
 
@@ -274,8 +275,10 @@
                     }
                     else {
                         // AddCallback 呼叫成功，但回傳錯誤
-                        cc.warn(proxy_name, "AddCallback 失敗!!", "resultCode=", result.resultCode);
-                        cc.warn(proxy_name, "AddCallback 失敗!!", "resultMessage=", result.resultMessage);
+                        logger.warn(proxy_name, "AddCallback 失敗!!", "resultCode=", result.resultCode);
+                        logger.warn(proxy_name, "AddCallback 失敗!!", "resultMessage=", result.resultMessage);
+                        filelogger.warn(proxy_name, "AddCallback 失敗!!", "resultCode=", result.resultCode);
+                        filelogger.warn(proxy_name, "AddCallback 失敗!!", "resultMessage=", result.resultMessage);
                         self._callconnectionLister(BravoLogin.ClientFacadeCommand.InvokeError, JSON.stringify({ ProxyName: proxy_name }));
 
                         // promise.fail();
@@ -319,14 +322,14 @@
                 invokablePrx.RemoveCallback(callbackPrx, self.glacier.session).then(
                     function() {
                         // AddCallback 成功
-                        console.log(proxy_name, "RemoveCallback 成功");
+                        logger.debug(proxy_name, "RemoveCallback 成功");
                         // TODO: Test
                         debugger;
                     }
                 ).exception(
                     function(ex) {
                         // InvokeError
-                        console.log(proxy_name, "RemoveCallback Error", ex.toString());
+                        logger.warn(proxy_name, "RemoveCallback Error", ex.toString());
                         // TODO: Test
                         debugger;
                         self._callconnectionLister(BravoLogin.ClientFacadeCommand.RemoveCallbackError, JSON.stringify({ ProxyName: proxy_name }));
@@ -371,7 +374,7 @@
                 // success
                 function() {
                     // guest 登入成功
-                    console.log("guest 登入成功");
+                    logger.debug("guest 登入成功");
 
                     var glacier = new BravoGlacier(self.DeviceId, self.loginInfo);
                     self.glacier = glacier;
@@ -380,7 +383,7 @@
             ).then(
                 // success
                 function(session) {
-                    console.log("glacier 登入成功");
+                    logger.debug("guest glacier 登入成功");
                     promise.succeed(session);
                 }
                 // // fail
@@ -398,7 +401,7 @@
                 // success
                 function() {
                     // fast 登入成功
-                    console.log("fast 登入成功");
+                    logger.debug("fast 登入成功");
 
                     var glacier = new BravoGlacier(self.DeviceId, self.loginInfo);
                     self.glacier = glacier;
@@ -407,7 +410,7 @@
             ).then(
                 // success
                 function(session) {
-                    console.log("glacier 登入成功");
+                    logger.debug("fast glacier 登入成功");
                     promise.succeed(session);
                 }
             ).exception(
@@ -446,7 +449,7 @@
                 var cookie = response.headers['set-cookie'];
                 if( cookie != undefined ) {
                     self.SessionCookies = cookie;
-                    console.log("Set-Cookie:", cookie);
+                    logger.debug("Set-Cookie:", cookie);
                 }
 
                 var result_data = response.data;
@@ -462,7 +465,6 @@
                         if( loginInfo ) {
                             // 計錄 loginInfo
                             self.loginInfo = loginInfo;
-                            console.log("GuestLogin 成功");
                             promise.succeed(loginInfo);
                         }
                         else {
@@ -478,7 +480,7 @@
                 }
             })
             .catch(function(error) {
-                throw error.toString();
+                promise.fail(error);
             });
 
         return promise;
@@ -507,7 +509,7 @@
                 var cookie = response.headers['set-cookie'];
                 if( cookie != undefined ) {
                     self.SessionCookies = cookie;
-                    console.log("Set-Cookie:", cookie);
+                    logger.debug("Set-Cookie:", cookie);
                 }
 
                 var result_data = response.data;
@@ -518,12 +520,10 @@
                     var result = JSON.parse(decString);
 
                     if( result && result.result_code == "OK" ) {
-                        console.log("API_Calle::OK");
                         var loginInfo = JSON.parse(result.result_data);
                         if( loginInfo ) {
                             // 計錄 loginInfo
                             self.loginInfo = loginInfo;
-                            console.log("FastLogin 成功!!");
                             promise.succeed(loginInfo);
                         } else {
                             throw "FastLogin loginInfo is null";
@@ -536,7 +536,7 @@
                 }
             })
             .catch(function(error) {
-                throw error.toString();
+                promise.fail(error);
             });
 
         return promise;
@@ -637,7 +637,7 @@
                 var cookie = response.headers['set-cookie'];
                 if( cookie != undefined ) {
                     self.SessionCookies = cookie;
-                    console.log("Set-Cookie:", cookie);
+                    logger.debug("Set-Cookie:", cookie);
                 }
 
                 var result_data = response.data;

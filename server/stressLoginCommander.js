@@ -2,6 +2,9 @@
  * Created by benson on 2016/12/24.
  */
 
+var logger = require("log4js").getLogger("stress");
+var filelogger = require("log4js").getLogger("stressFile");
+
 const _super = require('../public/StressCommander').prototype;
 
 var method = Commander.prototype = Object.create(_super);
@@ -37,7 +40,7 @@ method.createRunner = function() {
             runner.loginInfo = fastLoginInfo;
         }
         else {
-            console.warn('FastLogin 無可用帳號!!');
+            logger.warning('FastLogin 無可用帳號!!');
         }
     }
 
@@ -58,22 +61,21 @@ method.runAction = function(runner) {
     runner.createSession(isGuestLogin).then(
         function() {
             // 登入成功
-            console.log("登入成功，開始註冊回呼");
+            self.success(runner);
 
             // 登入失敗處理 function
             var failureHandler = function(msg) {
-                console.log(msg);
                 throw msg;
             };
 
             runner.registerAllFunctionalListener().then(function() {
-                console.log("回呼註冊成功");
+                logger.debug("回呼註冊成功");
 
                 Ice.Promise.delay(stayTime).then(function() {
                     // 登出
                     //console.log("登出");
                     runner.logout();
-                    self.success(runner);
+                    self.finish(runner);
 
                     // 修改狀態，並存檔
                     setting.running = false;
@@ -94,10 +96,10 @@ method.runAction = function(runner) {
                 }).exception(failureHandler);
             }, failureHandler);
         },
-        function() {
+        function(error) {
             // 登入失敗
-            // console.error("登入失敗");
-            throw "runner.createSession::登入失敗";
+            // filelogger.error("登入失敗");
+            throw "runner.createSession::登入失敗::[" + error + "]";
 
             // Lune: 失敗應該不用記錄資訊吧？ ..
             // // 快速登入
@@ -116,7 +118,8 @@ method.runAction = function(runner) {
             // }
         }
     ).exception(function(error) {
-        console.log(error);
+        logger.error(error);
+        filelogger.error(error);
 
         runner.logout();
         self.fail(runner);
