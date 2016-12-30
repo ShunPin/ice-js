@@ -37,7 +37,8 @@
                             <th>Running</th>
                             <th>Target</th>
                             <th>Current</th>
-                            <th>Success</th>
+	                        <th>Login</th>
+                            <th>Finish</th>
                             <th>Fail</th>
                         </tr>
                         <tr ng-repeat="x in infos | orderBy : 'id'" class={{x.type}}>
@@ -45,6 +46,7 @@
                             <td>{{ x.running }}</td>
                             <td>{{x.targetCount}}</td>
                             <td>{{x.currentCount}}</td>
+	                        <td>{{x.loginCount}}</td>
                             <td>{{x.finishCount}}</td>
                             <td>{{x.failCount}}</td>
                         </tr>

@@ -1,4 +1,4 @@
-(function (module, require, exports) {
+(function(module, require, exports) {
     var Ice = require('Ice').Ice;
     var Glacier2 = require("Ice").Glacier2;
     var RequestContract = require('../public/RequestContract').SGTech.AtlanticCity.RequestContract;
@@ -17,14 +17,14 @@
         this.session = undefined;
         this.communicator = undefined;
 
-        if (loginInfo) {
+        if( loginInfo ) {
             this.deviceId = deviceId;
             this.loginInfo = loginInfo;
 
             // 取 loginInfo.GlacierConnectionString (連線字串), 為 Default router
             this.GlacierConnectionString = loginInfo.GlacierConnectionString;
             // Node.js runtime, 用來壓測使用
-            if (typeof window === 'undefined') {
+            if( typeof window === 'undefined' ) {
                 this.GlacierConnectionString += ":tcp -h 127.0.0.1 -p " + this._getRandomPort(8000, 2);
             }
 
@@ -52,7 +52,7 @@
         }
     }
 
-    BravoGlacier.prototype._getRandomPort = function (begin_port, count) {
+    BravoGlacier.prototype._getRandomPort = function(begin_port, count) {
         var min = begin_port;
         var max = begin_port + count - 1;
         return Math.floor(Math.random() * (max - min + 1) + min);
@@ -62,11 +62,11 @@
      *  與 Glacier 連線驗證
      * @returns {*} SGTech.AtlanticCity.MemberCenter.RouterSessionPrx
      */
-    BravoGlacier.prototype.createSession = function () {
+    BravoGlacier.prototype.createSession = function() {
         var self = this;
 
         return Glacier2.RouterPrx.checkedCast(self.communicator.getDefaultRouter()).then(
-            function (router) {
+            function(router) {
                 // 計錄 RouterPrx
                 self.router = router;
 
@@ -81,7 +81,7 @@
 
                 console.log('createSession() createSessionFromSecureConnection');
                 return router.createSessionFromSecureConnection(context).then(
-                    function (session) {
+                    function(session) {
                         console.log('createSession() uncheckedCast');
                         self.session = MemberCenter.RouterSessionPrx.uncheckedCast(session);
                         return self.session;
@@ -89,20 +89,20 @@
                 );
             }
         ).exception(
-            function (ex) {
+            function(ex) {
                 //
                 // Handle any exceptions that occurred during session creation.
                 //
-                if (ex instanceof Glacier2.PermissionDeniedException) {
+                if( ex instanceof Glacier2.PermissionDeniedException ) {
                     console.error("permission denied:\n" + ex.reason);
-                } else if (ex instanceof Glacier2.CannotCreateSessionException) {
+                } else if( ex instanceof Glacier2.CannotCreateSessionException ) {
                     console.error("cannot create session:\n" + ex.reason);
-                } else if (ex instanceof Ice.ConnectFailedException) {
+                } else if( ex instanceof Ice.ConnectFailedException ) {
                     console.error("connection to server failed");
                 } else {
                     console.error(ex, ex.stack);
                 }
-                if (self.communicator) {
+                if( self.communicator ) {
                     self.communicator.destroy();
                 }
 
@@ -115,8 +115,15 @@
      *  Get MemberID
      * @returns {*}  Ice.AsyncResult
      */
-    BravoGlacier.prototype.getMemberID = function () {
+    BravoGlacier.prototype.getMemberID = function() {
         return this.session.GetMemberId();
+    };
+
+    BravoGlacier.prototype.disconnect = function() {
+        if( this.communicator ) {
+            this.communicator.destroy();
+            this.communicator = null;
+        }
     };
 
     exports.BravoGlacier = BravoGlacier;

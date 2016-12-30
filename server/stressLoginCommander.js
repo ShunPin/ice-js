@@ -2,6 +2,10 @@
  * Created by benson on 2016/12/24.
  */
 
+var logger = require("log4js").getLogger("stress");
+var filelogger = require("log4js").getLogger("stressFile");
+var ClientFacadeCommand = require("../public/bravoLogin").BravoLogin.ClientFacadeCommand;
+
 const _super = require('../public/StressCommander').prototype;
 
 var method = Commander.prototype = Object.create(_super);
@@ -11,11 +15,11 @@ function Commander() {
     this._settings = {};
 }
 
-method.setWebsite = function (url) {
+method.setWebsite = function(url) {
     this._settings.Website = url;
 };
 
-method.createRunner = function () {
+method.createRunner = function() {
     var self = this;
     var Ice = require("Ice").Ice;
     var BravoLogin = require('../public/bravoLogin').BravoLogin;
@@ -24,56 +28,68 @@ method.createRunner = function () {
     var runner = null;
 
     // 快速登入
-    if (isGuestLogin) {
+    if( isGuestLogin ) {
         deviceID = Ice.generateUUID().toString();
         runner = new BravoLogin(deviceID);
     }
     else {
         var user = require('../server/modelUser');
         var fastLoginInfo = user.getOffline();
-        if (fastLoginInfo) {
+        if( fastLoginInfo ) {
             deviceID = fastLoginInfo.DeviceId;
             runner = new BravoLogin(deviceID);
             runner.loginInfo = fastLoginInfo;
         }
         else {
-            console.warn('FastLogin 無可用帳號!!');
+            logger.warning('FastLogin 無可用帳號!!');
         }
     }
 
-    if (runner) {
+    if( runner ) {
         runner.setWebsite(self._settings.Website);
     }
     return runner;
 };
 
-method.runAction = function (runner) {
+method.runAction = function(runner) {
     var self = this;
     var Ice = require("Ice").Ice;
     var user = require('../server/modelUser');
     var isGuestLogin = (self.Config.method == 'GuestLogin');
     var stayTime = self.Config.stayTime * 1000;
     var setting = self.Config;
+    self.doLogout = false;
+
+    runner.setConnectionListener((method, data) => {
+        switch( method ) {
+            case ClientFacadeCommand.Disconnect:
+                if( !self.doLogout ) {
+                    logger.warn(data);
+                    filelogger.error(data);
+
+                    runner.logout();
+
+                    self.fail(runner);
+                }
+
+                self.disconnect(runner);
+                break;
+        }
+    });
 
     runner.createSession(isGuestLogin).then(
-        function () {
+        function() {
             // 登入成功
-            console.log("登入成功，開始註冊回呼");
+            self.login(runner);
 
-            // 登入失敗處理 function
-            var _loginfailed = function (msg) {
-                console.log(msg);
-                self.fail(runner);
-            };
+            runner.registerAllFunctionalListener().then(function() {
+                logger.debug("回呼註冊成功");
 
-            runner.registerAllFunctionalListener().then(function () {
-                console.log("回呼註冊成功");
-
-                Ice.Promise.delay(stayTime).then(function () {
+                Ice.Promise.delay(stayTime).then(function() {
                     // 登出
-                    //console.log("登出");
+                    self.doLogout = true;
                     runner.logout();
-                    self.success(runner);
+                    self.finish(runner);
 
                     // 修改狀態，並存檔
                     setting.running = false;
@@ -91,30 +107,46 @@ method.runAction = function (runner) {
                     user.add(fastLoginInfo);
                     // 加入 Offine User Array
                     user.addOffline(fastLoginInfo);
-                }).exception(_loginfailed);
-            }, _loginfailed);
+                });
+            }, function(error) {
+                logger.debug("回呼註冊失敗");
+                if( !self.doLogout ) {
+                    logger.warn(error);
+                    filelogger.error(error);
+
+                    runner.logout();
+                }
+
+                self.fail(runner);
+            });
         },
-        function () {
+        function(error) {
             // 登入失敗
-            console.error("登入失敗");
-            self.fail(runner);
+            // filelogger.error("登入失敗");
+            throw "runner.createSession::登入失敗::[" + error + "]";
 
-            // 快速登入
-            if (isGuestLogin) {
-
-            }
-            else {
-                // 將快速登入資訊回收
-                // 記錄 快速登入的  資訊
-                var fastLoginInfo = {
-                    "MemberId": runner.loginInfo.MemberId,
-                    "LoginToken": runner.loginInfo.LoginToken,
-                    "DeviceId": runner.DeviceId,
-                };
-                user.addOffline(fastLoginInfo);
-            }
+            // Lune: 失敗應該不用記錄資訊吧？ ..
+            // // 快速登入
+            // if( isGuestLogin ) {
+            //
+            // }
+            // else {
+            //     // 將快速登入資訊回收
+            //     // 記錄 快速登入的  資訊
+            //     var fastLoginInfo = {
+            //         "MemberId": runner.loginInfo.MemberId,
+            //         "LoginToken": runner.loginInfo.LoginToken,
+            //         "DeviceId": runner.DeviceId,
+            //     };
+            //     user.addOffline(fastLoginInfo);
+            // }
         }
-    );
+    ).exception(function(error) {
+        logger.error(error);
+        filelogger.error(error);
+
+        self.fail(runner);
+    });
 };
 
 module.exports = Commander;

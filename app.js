@@ -4,7 +4,7 @@ var favicon = require('serve-favicon');
 
 var log4js = require("log4js");
 //We won't need this.
-var logger = require('morgan');
+// var logger = require('morgan');
 //var log = log4js.getLogger("stress");
 
 var cookieParser = require('cookie-parser');
@@ -30,21 +30,29 @@ log4js.configure({
     appenders: [
         {
             category: "stress",
-            type: "logLevelFilter",
-            level: "ALL",
             type: "console"
         },
+        {
+            category: "stressFile",
+            type: "file",
+            filename: "logs/error.log",
+            maxLogSize: 10485760,
+            backups: 3,
+        }
         // {
         //     category: "stress",
         //     type: "logLevelFilter",
-        //     level: "INFO",
         //     appender: {
         //         type: "log4js-elasticsearch",
         //         url: "http://log.rd2.atcity.dev:9200/"
         //     }
-        // },
+        // }
     ],
-    //replaceConsole: true
+    "replaceConsole": true,
+    "levels": {
+        "stress": "INFO",
+        "stressError": "WARN"
+    }
 });
 
 
@@ -52,10 +60,10 @@ log4js.configure({
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 
 // replace this with the log4js connect-logger
-app.use(logger('dev'));
+// app.use(logger('dev'));
 //app.use(log4js.connectLogger(log4js.getLogger("http"), { level: 'auto' }));
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: false}));
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/bower_components', express.static(__dirname + '/bower_components'));
@@ -64,11 +72,11 @@ app.use('/node_modules', express.static(__dirname + '/node_modules'));
 app.use('/', routes);
 app.use('/users', users);
 app.use('/ice', helloIce);
-app.use('/stressLogin',stressLogin);
-app.use('/settings',settings);
+app.use('/stressLogin', stressLogin);
+app.use('/settings', settings);
 
 // catch 404 and forward to error handler
-app.use(function (req, res, next) {
+app.use(function(req, res, next) {
     var err = new Error('Not Found');
     err.status = 404;
     next(err);
@@ -78,8 +86,8 @@ app.use(function (req, res, next) {
 
 // development error handler
 // will print stacktrace
-if (app.get('env') === 'development') {
-    app.use(function (err, req, res, next) {
+if( app.get('env') === 'development' ) {
+    app.use(function(err, req, res, next) {
         res.status(err.status || 500);
         res.render('error', {
             message: err.message,
@@ -90,7 +98,7 @@ if (app.get('env') === 'development') {
 
 // production error handler
 // no stacktraces leaked to user
-app.use(function (err, req, res, next) {
+app.use(function(err, req, res, next) {
     res.status(err.status || 500);
     res.render('error', {
         message: err.message,

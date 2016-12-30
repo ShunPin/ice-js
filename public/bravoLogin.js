@@ -1,4 +1,7 @@
-(function (module, require, exports) {
+var logger = require("log4js").getLogger("stress");
+var filelogger = require("log4js").getLogger("stressFile");
+
+(function(module, require, exports) {
     //axios.defaults.withCredentials = true;
     var RequestContract = require('../public/RequestContract').SGTech.AtlanticCity.RequestContract;
     var ClientFacade = require('../public/ClientDynamicInvoke').SGTech.AtlanticCity.ClientFacade;
@@ -11,7 +14,7 @@
     var BravoGlacier = require('../public/bravoGlacier').BravoGlacier;
 
     // Node.js
-    if (typeof window === 'undefined') {
+    if( typeof window === 'undefined' ) {
         cryptico = require("cryptico-js");
         RSAKey = require("cryptico-js").RSAKey;
         axios = require("axios");
@@ -30,10 +33,10 @@
     // interface.
     //
     var InvokeCallback = Ice.Class(ClientFacade.Callbackable, {
-        __init__: function (callback) {
+        __init__: function(callback) {
             this.callbackFn = callback;
         },
-        Invoke: function (method, input) {
+        Invoke: function(method, input) {
             var result = {
                 result_code: RequestContract.ResultCode_Success,
                 result_message: ""
@@ -45,20 +48,15 @@
     });
 
     function BravoLogin(deviceID) {
-        this.axiosConfig = {withCredentials: true, headers: {}};
+        this.axiosConfig = { withCredentials: true, headers: {} };
         this.DeviceId = deviceID;
         //this.loginInfo = loginInfo;
         this.SessionCookies = [];
         this.RSAKey = {};
-        this.AESKey = {Key: "", IV: ""};
+        this.AESKey = { Key: "", IV: "" };
         this.Language = "zh_TW";
-        this.functionListener = {};
-        this.connectionListener = [];
-        // this.connectionListener.push(function(method, data) {
-        //     console.log("connectionListener ==");
-        //     console.log("Method: " + method);
-        //     console.log("Data: " + JSON.stringify(data));
-        // });
+        this._functionListener = {};
+        this._connectionListener = undefined;
         this.glacier = null;
     }
 
@@ -66,16 +64,25 @@
      *  設定要登入的 Website URL
      * @param url
      */
-    BravoLogin.prototype.setWebsite = function (url) {
+    BravoLogin.prototype.setWebsite = function(url) {
         this.axiosConfig.baseURL = url;
         this.clearSessionCookies();
         this.setLanguageTag("zh_TW");
     };
 
     /**
+     * 註冊連線狀態監聽
+     *
+     * @param {function(method, data)} listener
+     */
+    BravoLogin.prototype.setConnectionListener = function(listener) {
+        this._connectionListener = listener;
+    };
+
+    /**
      * @method clearSessionCookies
      */
-    BravoLogin.prototype.clearSessionCookies = function () {
+    BravoLogin.prototype.clearSessionCookies = function() {
         this.SessionCookies = {};
     };
 
@@ -83,7 +90,7 @@
      * @method setLanguageTag
      * @param {String} lang_tag
      */
-    BravoLogin.prototype.setLanguageTag = function (lang_tag) {
+    BravoLogin.prototype.setLanguageTag = function(lang_tag) {
         this.Language = lang_tag;
     };
 
@@ -93,7 +100,7 @@
      * @param isGuestLogin
      * @returns {*} Ice.Promise 物件, 成功並傳出 MemberCenter.RouterSessionPrx
      */
-    BravoLogin.prototype.createSession = function (isGuestLogin) {
+    BravoLogin.prototype.createSession = function(isGuestLogin) {
         var self = this;
 
         var promise = new Ice.Promise();
@@ -102,20 +109,18 @@
         var cmdBody = this._getPreloginEncryptKeyCmd();
         this.axiosConfig.headers['Cookie'] = self.SessionCookies;
         axios.post('/api/call', cmdBody, this.axiosConfig)
-            .then(function (response) {
+            .then(function(response) {
                 //console.log("response.headers:",JSON.stringify(response.headers));
                 // Check Cookie and save
                 var cookie = response.headers['set-cookie'];
-                if (cookie != undefined) {
+                if( cookie != undefined ) {
                     self.SessionCookies = cookie;
                     //console.log("Set-Cookie:", cookie);
                 }
 
                 // success
                 var result_code = response.data.result_code;
-                if (result_code && result_code == "OK") {
-                    //console.log("API_Call::OK");
-
+                if( result_code && result_code == "OK" ) {
                     // 取出 result_data
                     var result_data = response.data.result_data;
 
@@ -123,32 +128,34 @@
                     var resString = self._decryptRsaData(result_data);
                     var aesKey = JSON.parse(resString);
                     // 儲存 AES_Key
-                    if (aesKey) {
+                    if( aesKey ) {
                         // 取得 AESKey 成功
                         self._setAesKey(aesKey.Key, aesKey.IV);
 
                         // 處理登入
                         self._login(isGuestLogin).then(
                             // success
-                            function (session) {
+                            function(session) {
                                 promise.succeed(session);
+                            },
+                            // fail
+                            function(error) {
+                                promise.fail(error.toString());
                             }
-                            ).exception(
-                            function (ex) {
-                                promise.fail(ex);
-                            }
-                            );
+                        );
                     }
                     else {
                         delete self.AESKey;
                         // 取得 AESKey 失敗
-                        throw new Error("PreloginEncryptKey Error");
+                        throw "getPreloginEncryptKey fail, response: " + JSON.stringify(response.data);
                     }
                 }
+                else {
+                    throw "getPreloginEncryptKey fail, response: " + JSON.stringify(response.data);
+                }
             })
-            .catch(function (error) {
-                console.error(error);
-                promise.fail(error.toString());
+            .catch(function(error) {
+                promise.fail(error);
             });
 
         return promise;
@@ -157,22 +164,25 @@
     /**
      * @method logout
      */
-    BravoLogin.prototype.logout = function () {
+    BravoLogin.prototype.logout = function() {
         // 讓他斷線
-        this.glacier.communicator.destroy();
+        if( this.glacier ) {
+            this.glacier.disconnect();
+            this.glacier = null;
+        }
     };
 
-    BravoLogin.prototype.registerAllFunctionalListener = function () {
+    BravoLogin.prototype.registerAllFunctionalListener = function() {
         var promise = new Ice.Promise();
         Ice.Promise.all(BravoLogin.CallbackableProxyList.map(proxy =>
             this._registerFunctionalListener(proxy[0], (method, result, data) => {
-                // console.log("=================== [" + proxy[0] + "] ===================");
-                // console.log("Method: " + method);
-                // console.log("Result: " + JSON.stringify(result));
-                // console.log("Data: " + JSON.stringify(data));
-                // console.log("###################");
+                logger.trace("=================== [" + proxy[0] + "] ===================");
+                logger.trace("Method: " + method);
+                logger.trace("Result: " + JSON.stringify(result));
+                logger.trace("Data: " + JSON.stringify(data));
+                logger.trace("###################");
             }, proxy[1])
-            )).then(() => promise.succeed()).exception(() => promise.fail());
+        )).then(() => promise.succeed()).exception(() => promise.fail());
 
         return promise;
     };
@@ -217,13 +227,13 @@
      * @param {boolean} [register_to_ice=false]
      * @return {boolean}
      */
-    BravoLogin.prototype._registerFunctionalListener = function (proxy_name,
-                                                                 callback,
-                                                                 register_to_ice) {
+    BravoLogin.prototype._registerFunctionalListener = function(proxy_name,
+                                                                callback,
+                                                                register_to_ice) {
 
         var promise;
         // 需要對 ice add callback
-        if (register_to_ice) {
+        if( register_to_ice ) {
             // 對 Ice :: addCallback
             var self = this;
             var proxy = self.glacier.communicator.stringToProxy(proxy_name);
@@ -231,11 +241,11 @@
             var callbackPrx;
             var categoryString = "";
             promise =
-                self.glacier.router.getCategoryForClient().then(function (category) {
+                self.glacier.router.getCategoryForClient().then(function(category) {
                         categoryString = category;
                         return self.glacier.communicator.createObjectAdapterWithRouter("", self.glacier.router);
                     }
-                ).then(function (adapter) {
+                ).then(function(adapter) {
                     //
                     // Create a callback receiver servant and add it to
                     // the object adapter.
@@ -256,33 +266,37 @@
                     // Register the client with the bidir server.
                     //
                     return invokablePrx.AddCallback(callbackPrx, self.glacier.session);
-                }).then(function (result) {
-                    if (result.resultCode == RequestContract.RequestResult.ResultCode_Success) {
+                }).then(function(result) {
+                    if( result.resultCode == RequestContract.RequestResult.ResultCode_Success ) {
                         // AddCallback 成功
                         //console.log(proxy_name, "AddCallback 成功");
 
                         // 計錄callbackPrx 到 functionListener 中
-                        self.functionListener[proxy_name].callbackPrx = callbackPrx;
-                        self._callconnectionLister(BravoLogin.ClientFacadeCommand.AddCallbackSucceed, JSON.stringify({ProxyName: proxy_name}));
+                        self._functionListener[proxy_name].callbackPrx = callbackPrx;
+                        self._callconnectionLister(BravoLogin.ClientFacadeCommand.AddCallbackSucceed, JSON.stringify({ ProxyName: proxy_name }));
 
                         promise.succeed();
                     }
                     else {
                         // AddCallback 呼叫成功，但回傳錯誤
-                        cc.warn(proxy_name, "AddCallback 失敗!!", "resultCode=", result.resultCode);
-                        cc.warn(proxy_name, "AddCallback 失敗!!", "resultMessage=", result.resultMessage);
-                        self._callconnectionLister(BravoLogin.ClientFacadeCommand.InvokeError, JSON.stringify({ProxyName: proxy_name}));
+                        logger.warn(proxy_name, "AddCallback 失敗!!", "resultCode=", result.resultCode);
+                        logger.warn(proxy_name, "AddCallback 失敗!!", "resultMessage=", result.resultMessage);
+                        filelogger.warn(proxy_name, "AddCallback 失敗!!", "resultCode=", result.resultCode);
+                        filelogger.warn(proxy_name, "AddCallback 失敗!!", "resultMessage=", result.resultMessage);
+                        self._callconnectionLister(BravoLogin.ClientFacadeCommand.InvokeError, JSON.stringify({ ProxyName: proxy_name }));
 
-                        promise.fail();
+                        // promise.fail();
+                        throw JSON.stringify(result);
                     }
 
-                }).exception(function (ex) {
+                }).exception(function(ex) {
                     // InvokeError
                     //console.log(proxy_name, "AddCallback Error", ex.toString());
 
-                    self._callconnectionLister(BravoLogin.ClientFacadeCommand.AddCallbackError, JSON.stringify({ProxyName: proxy_name}));
+                    self._callconnectionLister(BravoLogin.ClientFacadeCommand.AddCallbackError, JSON.stringify({ ProxyName: proxy_name }));
 
-                    promise.fail();
+                    // promise.fail();
+                    throw JSON.stringify(result);
                 });
         }
         else {
@@ -291,7 +305,7 @@
         }
 
         // 計錄到 functionListener 中
-        this.functionListener[proxy_name] = {"callback": callback, "register_to_ice": register_to_ice};
+        this._functionListener[proxy_name] = { "callback": callback, "register_to_ice": register_to_ice };
         return promise;
     };
 
@@ -299,35 +313,35 @@
      * @method unregisterFunctionalListener
      * @param {String} proxy_name
      */
-    BravoLogin.prototype._unregisterFunctionalListener = function (proxy_name) {
-        var callbackInfo = this.functionListener[proxy_name];
+    BravoLogin.prototype._unregisterFunctionalListener = function(proxy_name) {
+        var callbackInfo = this._functionListener[proxy_name];
 
         // Check 是否要對 Ice RemoveCallback
-        if (callbackInfo.register_to_ice) {
+        if( callbackInfo.register_to_ice ) {
             // 對 Ice :: RemoveCallback
             var self = this;
             var proxy = self.glacier.communicator.stringToProxy(proxy_name);
             var invokablePrx = ClientFacade.InvokablePrx.uncheckedCast(proxy);
-            if (typeof callbackInfo.callbackPrx != 'undefined') {
+            if( typeof callbackInfo.callbackPrx != 'undefined' ) {
                 invokablePrx.RemoveCallback(callbackPrx, self.glacier.session).then(
-                    function () {
+                    function() {
                         // AddCallback 成功
-                        console.log(proxy_name, "RemoveCallback 成功");
+                        logger.debug(proxy_name, "RemoveCallback 成功");
                         // TODO: Test
                         debugger;
                     }
                 ).exception(
-                    function (ex) {
+                    function(ex) {
                         // InvokeError
-                        console.log(proxy_name, "RemoveCallback Error", ex.toString());
+                        logger.warn(proxy_name, "RemoveCallback Error", ex.toString());
                         // TODO: Test
                         debugger;
-                        self._callconnectionLister(BravoLogin.ClientFacadeCommand.RemoveCallbackError, JSON.stringify({ProxyName: proxy_name}));
+                        self._callconnectionLister(BravoLogin.ClientFacadeCommand.RemoveCallbackError, JSON.stringify({ ProxyName: proxy_name }));
                     });
             }
         }
 
-        delete self.functionListener[proxy_name];
+        delete self._functionListener[proxy_name];
     };
 
     /**
@@ -336,15 +350,15 @@
      * @param data
      * @private
      */
-    BravoLogin.prototype._callconnectionLister = function (method, data) {
-        this.connectionListener.forEach(function (listener) {
-            listener(method, data);
-        }, this);
+    BravoLogin.prototype._callconnectionLister = function(method, data) {
+        if( this._connectionListener ) {
+            this._connectionListener(method, data);
+        }
     };
 
-    BravoLogin.prototype._callFunctionalListener = function (proxy_name, method, result, data) {
-        if (this.functionListener.hasOwnProperty(proxy_name)) {
-            this.functionListener[proxy_name].callback(method, result, data);
+    BravoLogin.prototype._callFunctionalListener = function(proxy_name, method, result, data) {
+        if( this._functionListener.hasOwnProperty(proxy_name) ) {
+            this._functionListener[proxy_name].callback(method, result, data);
         }
     };
 
@@ -354,68 +368,87 @@
      * @returns {*} Ice.Promise 物件, 成功必導出 MemberCenter.RouterSessionPrx
      * @private
      */
-    BravoLogin.prototype._login = function (isGuestLogin) {
+    BravoLogin.prototype._login = function(isGuestLogin) {
         var self = this;
         var promise = new Ice.Promise();
 
-        if (isGuestLogin) {
+        var loginPromise;
+        if( isGuestLogin ) {
             // guest 登入
-            self._guestLogin().then(
-                // success
-                function () {
-                    // guest 登入成功
-                    console.log("guest 登入成功");
-
-                    var glacier = new BravoGlacier(self.DeviceId, self.loginInfo);
-                    self.glacier = glacier;
-                    return glacier.createSession();
-                }
-            ).then(
-                // success
-                function (session) {
-                    console.log("glacier 登入成功");
-                    promise.succeed(session);
-                }
-                // // fail
-                //     console.error("glacier 登入失敗");
-                //     promise.fail(info);
-                // }
-            ).exception(
-                function (ex) {
-                    console.error(ex.toString());
-                    promise.fail(ex.toString());
-                }
-            );
-        } else {
-            // fast 登入
-            self._fastLogin().then(
-                // success
-                function () {
-                    // fast 登入成功
-                    console.log("fast 登入成功");
-
-                    var glacier = new BravoGlacier(self.DeviceId, self.loginInfo);
-                    self.glacier = glacier;
-                    return glacier.createSession();
-                }
-            ).then(
-                // success
-                function (session) {
-                    console.log("glacier 登入成功");
-                    promise.succeed(session);
-                }
-            ).exception(
-                function (ex) {
-                    console.error(ex.toString());
-                    promise.fail(ex.toString());
-                }
-            );
+            loginPromise = self._guestLogin();
         }
+        else {
+            // fast 登入
+            loginPromise = self._fastLogin();
+        }
+
+        loginPromise.then(
+            // success
+            function() {
+                var glacier = new BravoGlacier(self.DeviceId, self.loginInfo);
+                self.glacier = glacier;
+                return glacier.createSession().then(
+                    // success
+                    function(session) {
+                        console.log("glacier 登入成功");
+                        // 通知 Listener
+                        self._callconnectionLister(BravoLogin.ClientFacadeCommand.Login);
+
+                        // 加上 connection callback
+                        var connection = glacier.router.ice_getCachedConnection();
+                        connection.setCallback({
+                            closed: function() {
+                                // 通知 Listener
+                                self._callconnectionLister(BravoLogin.ClientFacadeCommand.Disconnect, "Connection lost!!");
+                            }
+                        });
+                    },
+                    function(fail) {
+                        var methodArg = {
+                            CanRetry: true, //(是否可重試連線)
+                            // 由錯誤(例外)原因來分辨
+                            ExceptionMessage: fail.toString(), //(例外訊息)}
+                        };
+                        // 通知 listener
+                        self._callconnectionLister(BravoLogin.ClientFacadeCommand.LoginError, JSON.stringify(methodArg));
+
+                        // throw "glacier 登入失敗: " + fail;
+                        promise.fail("glacier 登入失敗: " + fail);
+                    }
+                ).exception(
+                    function(ex) {
+                        var methodArg = {
+                            CanRetry: false, //(是否可重試連線)
+                            // 由錯誤(例外)原因來分辨
+                            ExceptionMessage: ex.toString(), //(例外訊息)}
+                        };
+                        // 通知 listener
+                        self._callconnectionLister(BravoLogin.ClientFacadeCommand.LoginError, JSON.stringify(methodArg));
+
+                        // throw "glacier 登入失敗: " + ex.toString();
+                        promise.fail("glacier 登入失敗: " + ex.toString());
+                    }
+                );
+            }
+        ).then(
+            // success
+            function(session) {
+                promise.succeed(session);
+            }
+            // // fail
+            //     console.error("glacier 登入失敗");
+            //     promise.fail(info);
+            // }
+        ).exception(
+            function(ex) {
+                promise.fail(ex);
+            }
+        );
 
         return promise;
     };
 
-    BravoLogin.prototype._guestLogin = function () {
+    BravoLogin.prototype._guestLogin = function() {
         var self = this;
         delete this.loginInfo;
 
@@ -430,55 +463,55 @@
         // AES 加密, 並轉 base64
         var key = CryptoJS.enc.Utf8.parse(this.AESKey.Key);
         var iv = CryptoJS.enc.Utf8.parse(this.AESKey.IV);
-        var encrypted = CryptoJS.AES.encrypt(cmdBodyString, key, {iv: iv});
+        var encrypted = CryptoJS.AES.encrypt(cmdBodyString, key, { iv: iv });
         var encString = encrypted.ciphertext.toString(CryptoJS.enc.Base64);
 
-        var newCmdBody = {"data": encString};
+        var newCmdBody = { "data": encString };
         this.axiosConfig.headers['Cookie'] = self.SessionCookies;
         axios.post('/api/calle', newCmdBody, this.axiosConfig)
         // success
-            .then(function (response) {
+            .then(function(response) {
                 var cookie = response.headers['set-cookie'];
-                if (cookie != undefined) {
+                if( cookie != undefined ) {
                     self.SessionCookies = cookie;
-                    console.log("Set-Cookie:", cookie);
+                    logger.debug("Set-Cookie:", cookie);
                 }
 
                 var result_data = response.data;
-                if (result_data && result_data.length > 2) {
+                if( result_data && result_data.length > 2 ) {
                     // AES 解密
-                    var decrypted = CryptoJS.AES.decrypt(result_data, key, {iv: iv});
+                    var decrypted = CryptoJS.AES.decrypt(result_data, key, { iv: iv });
                     var decString = CryptoJS.enc.Utf8.stringify(decrypted);
                     var result = JSON.parse(decString);
 
-                    if (result && result.result_code == "OK") {
+                    if( result && result.result_code == "OK" ) {
                         console.log("API_Calle::OK");
                         var loginInfo = JSON.parse(result.result_data);
-                        if (loginInfo) {
+                        if( loginInfo ) {
                             // 計錄 loginInfo
                             self.loginInfo = loginInfo;
-                            console.log("GuestLogin 成功");
                             promise.succeed(loginInfo);
-                        } else {
-                            promise.fail("GuestLogin loginInfo is null");
                         }
-
-                    } else {
-                        promise.fail("GuestLogin result Error");
+                        else {
+                            throw "GuestLogin loginInfo is null";
+                        }
                     }
-                } else {
-                    promise.fail("GuestLogin result Error");
+                    else {
+                        throw "GuestLogin fail, response: " + JSON.stringify(response.data);
+                    }
+                }
+                else {
+                    throw "GuestLogin fail, response: " + JSON.stringify(response.data);
                 }
             })
-            .catch(function (error) {
-                console.error(error);
-                promise.fail(error.toString());
+            .catch(function(error) {
+                promise.fail(error);
             });
 
         return promise;
     };
 
-    BravoLogin.prototype._fastLogin = function () {
+    BravoLogin.prototype._fastLogin = function() {
         var self = this;
 
         var promise = new Ice.Promise();
@@ -490,50 +523,45 @@
         // AES 加密, 並轉 base64
         var key = CryptoJS.enc.Utf8.parse(self.AESKey.Key);
         var iv = CryptoJS.enc.Utf8.parse(self.AESKey.IV);
-        var encrypted = CryptoJS.AES.encrypt(cmdBodyString, key, {iv: iv});
+        var encrypted = CryptoJS.AES.encrypt(cmdBodyString, key, { iv: iv });
         var encString = encrypted.ciphertext.toString(CryptoJS.enc.Base64);
 
-        var newCmdBody = {"data": encString};
+        var newCmdBody = { "data": encString };
         this.axiosConfig.headers['Cookie'] = self.SessionCookies;
         axios.post('/api/calle', newCmdBody, this.axiosConfig)
         // success
-            .then(function (response) {
+            .then(function(response) {
                 var cookie = response.headers['set-cookie'];
-                if (cookie != undefined) {
+                if( cookie != undefined ) {
                     self.SessionCookies = cookie;
-                    console.log("Set-Cookie:", cookie);
+                    logger.debug("Set-Cookie:", cookie);
                 }
 
                 var result_data = response.data;
-                if (result_data && result_data.length > 2) {
+                if( result_data && result_data.length > 2 ) {
                     // AES 解密
-                    var decrypted = CryptoJS.AES.decrypt(result_data, key, {iv: iv});
+                    var decrypted = CryptoJS.AES.decrypt(result_data, key, { iv: iv });
                     var decString = CryptoJS.enc.Utf8.stringify(decrypted);
                     var result = JSON.parse(decString);
 
-                    if (result && result.result_code == "OK") {
-                        console.log("API_Calle::OK");
+                    if( result && result.result_code == "OK" ) {
                         var loginInfo = JSON.parse(result.result_data);
-                        if (loginInfo) {
+                        if( loginInfo ) {
                             // 計錄 loginInfo
                             self.loginInfo = loginInfo;
-                            console.log("FastLogin 成功!!");
                             promise.succeed(loginInfo);
                         } else {
-                            promise.fail("FastLogin loginInfo is null");
+                            throw "FastLogin loginInfo is null";
                         }
                     } else {
-                        console.error("FastLogin result Error!!");
-                        promise.fail("FastLogin result Error");
+                        throw "FastLogin fail, response: " + JSON.stringify(response.data);
                     }
                 } else {
-                    console.error("登入失敗!!");
-                    promise.fail("FastLogin result Error");
+                    throw "FastLogin fail, response: " + JSON.stringify(response.data);
                 }
             })
-            .catch(function (ex) {
-                console.log(error);
-                promise.fail(error.toString());
+            .catch(function(error) {
+                promise.fail(error);
             });
 
         return promise;
@@ -543,7 +571,7 @@
      * @method getRsaPublicKey
      * @return {String} rsa key
      */
-    BravoLogin.prototype._getRsaPublicKey = function () {
+    BravoLogin.prototype._getRsaPublicKey = function() {
         // 產生 RSA Key, 長度 1024, Exponent 0x10001
         var rsa = new RSAKey();
         rsa.generate(1024, "10001");
@@ -569,8 +597,8 @@
      * @param {String} key
      * @param {String} iv
      */
-    BravoLogin.prototype._setAesKey = function (key,
-                                                iv) {
+    BravoLogin.prototype._setAesKey = function(key,
+                                               iv) {
         this.AESKey.Key = key.substring(0);
         this.AESKey.IV = iv.substring(0);
     };
@@ -580,7 +608,7 @@
      * @param {String} enc_data (BASE64 預設)
      * @return {String}
      */
-    BravoLogin.prototype._decryptRsaData = function (enc_data) {
+    BravoLogin.prototype._decryptRsaData = function(enc_data) {
         var rsaKey = this.RSAKey;
         var decoded_str = CryptoJS.enc.Base64.parse(enc_data).toString();
         var resString = rsaKey.decrypt(decoded_str);
@@ -594,16 +622,16 @@
      * @param {String} params
      * @param {function} callback
      */
-    BravoLogin.prototype._sendRequest = function (url,
-                                                  headers,
-                                                  params,
-                                                  callback) {
-        var config = {withCredentials: true};
+    BravoLogin.prototype._sendRequest = function(url,
+                                                 headers,
+                                                 params,
+                                                 callback) {
+        var config = { withCredentials: true };
         config.headers = headers;
         var cmdBody = JSON.parse(params);
         this.axiosConfig.headers['Cookie'] = self.SessionCookies;
         axios.post(url, cmdBody, config)
-            .then(function (response) {
+            .then(function(response) {
                 callback(response.status, JSON.stringify(response.data));
             });
     };
@@ -615,32 +643,32 @@
      * @param {String} params
      * @param {function} callback
      */
-    BravoLogin.prototype._sendEncryptionRequest = function (url,
-                                                            headers,
-                                                            params,
-                                                            callback) {
+    BravoLogin.prototype._sendEncryptionRequest = function(url,
+                                                           headers,
+                                                           params,
+                                                           callback) {
         // AES 加密, 並轉 base64
         var key = CryptoJS.enc.Utf8.parse(this.AESKey.Key);
         var iv = CryptoJS.enc.Utf8.parse(this.AESKey.IV);
-        var encrypted = CryptoJS.AES.encrypt(params, key, {iv: iv});
+        var encrypted = CryptoJS.AES.encrypt(params, key, { iv: iv });
         var encString = encrypted.ciphertext.toString(CryptoJS.enc.Base64);
 
-        var newCmdBody = {"data": encString};
-        var config = {withCredentials: true};
+        var newCmdBody = { "data": encString };
+        var config = { withCredentials: true };
         // TODO:
         config.headers['Cookie'] = self.SessionCookies;
         axios.post(url, newCmdBody, config)
-            .then(function (response) {
+            .then(function(response) {
                 var cookie = response.headers['set-cookie'];
-                if (cookie != undefined) {
+                if( cookie != undefined ) {
                     self.SessionCookies = cookie;
-                    console.log("Set-Cookie:", cookie);
+                    logger.debug("Set-Cookie:", cookie);
                 }
 
                 var result_data = response.data;
-                if (result_data && result_data.length > 2) {
+                if( result_data && result_data.length > 2 ) {
                     // AES 解密
-                    var decrypted = CryptoJS.AES.decrypt(result_data, key, {iv: iv});
+                    var decrypted = CryptoJS.AES.decrypt(result_data, key, { iv: iv });
                     var decString = CryptoJS.enc.Utf8.stringify(decrypted);
                     //var result = JSON.parse(decString);
                     callback(response.status, decString);
@@ -648,8 +676,8 @@
                     callback(response.status, response.data);
                 }
             })
-            .catch(function (error) {
-                if (error.response) {
+            .catch(function(error) {
+                if( error.response ) {
                     // The request was made, but the server responded with a status code
                     // that falls out of the range of 2xx
                     callback(error.response.status, error.response.data);
@@ -657,30 +685,30 @@
             });
     };
 
-    BravoLogin.prototype._getPreloginEncryptKeyCmd = function () {
-        if (this.RSAKey) delete this.RSAKey;
+    BravoLogin.prototype._getPreloginEncryptKeyCmd = function() {
+        if( this.RSAKey ) delete this.RSAKey;
 
         var pubKeyBase64 = this._getRsaPublicKey();
         var body = {
             "command": "GetPreloginEncryptKey",
-            "data": JSON.stringify({"Key": pubKeyBase64}),
+            "data": JSON.stringify({ "Key": pubKeyBase64 }),
             "product": "apk",
         };
 
         return body;
     };
 
-    BravoLogin.prototype._getGuestLoginCmd = function () {
+    BravoLogin.prototype._getGuestLoginCmd = function() {
         var body = {
             "command": "GuestLogin",
-            "data": JSON.stringify({"DeviceId": this.DeviceId}),
+            "data": JSON.stringify({ "DeviceId": this.DeviceId }),
             "product": "apk",
         };
 
         return body;
     };
 
-    BravoLogin.prototype._getFastLoginCmd = function () {
+    BravoLogin.prototype._getFastLoginCmd = function() {
         var body = {
             "command": "FastLogin",
             "data": JSON.stringify({
