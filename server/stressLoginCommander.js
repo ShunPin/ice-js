@@ -4,6 +4,7 @@
 
 var logger = require("log4js").getLogger("stress");
 var filelogger = require("log4js").getLogger("stressFile");
+var ClientFacadeCommand = require("../public/bravoLogin").BravoLogin.ClientFacadeCommand;
 
 const _super = require('../public/StressCommander').prototype;
 
@@ -57,23 +58,36 @@ method.runAction = function(runner) {
     var isGuestLogin = (self.Config.method == 'GuestLogin');
     var stayTime = self.Config.stayTime * 1000;
     var setting = self.Config;
+    self.doLogout = false;
+
+    runner.setConnectionListener((method, data) => {
+        switch( method ) {
+            case ClientFacadeCommand.Disconnect:
+                if( !self.doLogout ) {
+                    logger.warn(data);
+                    filelogger.error(data);
+
+                    runner.logout();
+
+                    self.fail(runner);
+                }
+
+                self.disconnect(runner);
+                break;
+        }
+    });
 
     runner.createSession(isGuestLogin).then(
         function() {
             // 登入成功
-            self.success(runner);
-
-            // 登入失敗處理 function
-            var failureHandler = function(msg) {
-                throw msg;
-            };
+            self.login(runner);
 
             runner.registerAllFunctionalListener().then(function() {
                 logger.debug("回呼註冊成功");
 
                 Ice.Promise.delay(stayTime).then(function() {
                     // 登出
-                    //console.log("登出");
+                    self.doLogout = true;
                     runner.logout();
                     self.finish(runner);
 
@@ -93,8 +107,18 @@ method.runAction = function(runner) {
                     user.add(fastLoginInfo);
                     // 加入 Offine User Array
                     user.addOffline(fastLoginInfo);
-                }).exception(failureHandler);
-            }, failureHandler);
+                });
+            }, function(error) {
+                logger.debug("回呼註冊失敗");
+                if( !self.doLogout ) {
+                    logger.warn(error);
+                    filelogger.error(error);
+
+                    runner.logout();
+                }
+
+                self.fail(runner);
+            });
         },
         function(error) {
             // 登入失敗
@@ -121,7 +145,6 @@ method.runAction = function(runner) {
         logger.error(error);
         filelogger.error(error);
 
-        runner.logout();
         self.fail(runner);
     });
 };

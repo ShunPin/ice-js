@@ -6,6 +6,7 @@ var express = require('express');
 var router = express.Router();
 var path = require('path');
 var log = require("log4js").getLogger("stress");
+var errlogger = require("log4js").getLogger("stressError");
 var Ice = require("Ice").Ice;
 var Commander = require('../public/StressCommander');
 var BravoLogin = require('../public/bravoLogin').BravoLogin;
@@ -18,8 +19,15 @@ router.get('/', function (req, res, next) {
 });
 
 router.get('/test', function (req, res, next) {
+    log.trace("Entering cheese testing");
+    log.debug("Got cheese.");
+    log.info("Cheese is Gouda.");
+    log.warn("Cheese is quite smelly.");
+    log.error("Cheese is too ripe!");
+    log.fatal("Cheese was breeding ground for listeria.");
+    log.mark("Cheese marks");
 
-    res.send('test OK')
+    res.send('test OK');
     res.status(200).end();
 });
 
@@ -27,7 +35,7 @@ router.get('/test/:id', function (req, res, next) {    //res.send('respond with 
     // 測試將 id 內狀態改變 ( Stop <-> Run )
     var id = req.params.id;
 
-    res.send('test OK')
+    res.send('test OK');
     res.status(200).end();
 });
 

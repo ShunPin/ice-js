@@ -36,8 +36,8 @@ log4js.configure({
             category: "stressFile",
             type: "file",
             filename: "logs/error.log",
-            maxLogSize: 20480,
-            backups: 4,
+            maxLogSize: 10485760,
+            backups: 3,
         }
         // {
         //     category: "stress",

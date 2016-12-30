@@ -55,13 +55,8 @@ var filelogger = require("log4js").getLogger("stressFile");
         this.RSAKey = {};
         this.AESKey = { Key: "", IV: "" };
         this.Language = "zh_TW";
-        this.functionListener = {};
-        this.connectionListener = [];
-        // this.connectionListener.push(function(method, data) {
-        //     console.log("connectionListener ==");
-        //     console.log("Method: " + method);
-        //     console.log("Data: " + JSON.stringify(data));
-        // });
+        this._functionListener = {};
+        this._connectionListener = undefined;
         this.glacier = null;
     }
 
@@ -73,6 +68,15 @@ var filelogger = require("log4js").getLogger("stressFile");
         this.axiosConfig.baseURL = url;
         this.clearSessionCookies();
         this.setLanguageTag("zh_TW");
+    };
+
+    /**
+     * 註冊連線狀態監聽
+     *
+     * @param {function(method, data)} listener
+     */
+    BravoLogin.prototype.setConnectionListener = function(listener) {
+        this._connectionListener = listener;
     };
 
     /**
@@ -133,10 +137,10 @@ var filelogger = require("log4js").getLogger("stressFile");
                             // success
                             function(session) {
                                 promise.succeed(session);
-                            }
-                        ).exception(
+                            },
+                            // fail
                             function(error) {
-                                throw error.toString();
+                                promise.fail(error.toString());
                             }
                         );
                     }
@@ -268,7 +272,7 @@ var filelogger = require("log4js").getLogger("stressFile");
                         //console.log(proxy_name, "AddCallback 成功");
 
                         // 計錄callbackPrx 到 functionListener 中
-                        self.functionListener[proxy_name].callbackPrx = callbackPrx;
+                        self._functionListener[proxy_name].callbackPrx = callbackPrx;
                         self._callconnectionLister(BravoLogin.ClientFacadeCommand.AddCallbackSucceed, JSON.stringify({ ProxyName: proxy_name }));
 
                         promise.succeed();
@@ -301,7 +305,7 @@ var filelogger = require("log4js").getLogger("stressFile");
         }
 
         // 計錄到 functionListener 中
-        this.functionListener[proxy_name] = { "callback": callback, "register_to_ice": register_to_ice };
+        this._functionListener[proxy_name] = { "callback": callback, "register_to_ice": register_to_ice };
         return promise;
     };
 
@@ -310,7 +314,7 @@ var filelogger = require("log4js").getLogger("stressFile");
      * @param {String} proxy_name
      */
     BravoLogin.prototype._unregisterFunctionalListener = function(proxy_name) {
-        var callbackInfo = this.functionListener[proxy_name];
+        var callbackInfo = this._functionListener[proxy_name];
 
         // Check 是否要對 Ice RemoveCallback
         if( callbackInfo.register_to_ice ) {
@@ -337,7 +341,7 @@ var filelogger = require("log4js").getLogger("stressFile");
             }
         }
 
-        delete self.functionListener[proxy_name];
+        delete self._functionListener[proxy_name];
     };
 
     /**
@@ -347,14 +351,14 @@ var filelogger = require("log4js").getLogger("stressFile");
      * @private
      */
     BravoLogin.prototype._callconnectionLister = function(method, data) {
-        this.connectionListener.forEach(function(listener) {
-            listener(method, data);
-        }, this);
+        if( this._connectionListener ) {
+            this._connectionListener(method, data);
+        }
     };
 
     BravoLogin.prototype._callFunctionalListener = function(proxy_name, method, result, data) {
-        if( this.functionListener.hasOwnProperty(proxy_name) ) {
-            this.functionListener[proxy_name].callback(method, result, data);
+        if( this._functionListener.hasOwnProperty(proxy_name) ) {
+            this._functionListener[proxy_name].callback(method, result, data);
         }
     };
 
@@ -368,57 +372,78 @@ var filelogger = require("log4js").getLogger("stressFile");
         var self = this;
         var promise = new Ice.Promise();
 
+        var loginPromise;
         if( isGuestLogin ) {
             // guest 登入
-            self._guestLogin().then(
-                // success
-                function() {
-                    // guest 登入成功
-                    logger.debug("guest 登入成功");
-
-                    var glacier = new BravoGlacier(self.DeviceId, self.loginInfo);
-                    self.glacier = glacier;
-                    return glacier.createSession();
-                }
-            ).then(
-                // success
-                function(session) {
-                    logger.debug("guest glacier 登入成功");
-                    promise.succeed(session);
-                }
-                // // fail
-                //     console.error("glacier 登入失敗");
-                //     promise.fail(info);
-                // }
-            ).exception(
-                function(ex) {
-                    throw ex.toString();
-                }
-            );
-        } else {
-            // fast 登入
-            self._fastLogin().then(
-                // success
-                function() {
-                    // fast 登入成功
-                    logger.debug("fast 登入成功");
-
-                    var glacier = new BravoGlacier(self.DeviceId, self.loginInfo);
-                    self.glacier = glacier;
-                    return glacier.createSession();
-                }
-            ).then(
-                // success
-                function(session) {
-                    logger.debug("fast glacier 登入成功");
-                    promise.succeed(session);
-                }
-            ).exception(
-                function(ex) {
-                    throw ex.toString();
-                }
-            );
+            loginPromise = self._guestLogin();
         }
+        else {
+            // fast 登入
+            loginPromise = self._fastLogin();
+        }
+
+        loginPromise.then(
+            // success
+            function() {
+                var glacier = new BravoGlacier(self.DeviceId, self.loginInfo);
+                self.glacier = glacier;
+                return glacier.createSession().then(
+                    // success
+                    function(session) {
+                        console.log("glacier 登入成功");
+                        // 通知 Listener
+                        self._callconnectionLister(BravoLogin.ClientFacadeCommand.Login);
+
+                        // 加上 connection callback
+                        var connection = glacier.router.ice_getCachedConnection();
+                        connection.setCallback({
+                            closed: function() {
+                                // 通知 Listener
+                                self._callconnectionLister(BravoLogin.ClientFacadeCommand.Disconnect, "Connection lost!!");
+                            }
+                        });
+                    },
+                    function(fail) {
+                        var methodArg = {
+                            CanRetry: true, //(是否可重試連線)
+                            // 由錯誤(例外)原因來分辨
+                            ExceptionMessage: fail.toString(), //(例外訊息)}
+                        };
+                        // 通知 listener
+                        self._callconnectionLister(BravoLogin.ClientFacadeCommand.LoginError, JSON.stringify(methodArg));
+
+                        // throw "glacier 登入失敗: " + fail;
+                        promise.fail("glacier 登入失敗: " + fail);
+                    }
+                ).exception(
+                    function(ex) {
+                        var methodArg = {
+                            CanRetry: false, //(是否可重試連線)
+                            // 由錯誤(例外)原因來分辨
+                            ExceptionMessage: ex.toString(), //(例外訊息)}
+                        };
+                        // 通知 listener
+                        self._callconnectionLister(BravoLogin.ClientFacadeCommand.LoginError, JSON.stringify(methodArg));
+
+                        // throw "glacier 登入失敗: " + ex.toString();
+                        promise.fail("glacier 登入失敗: " + ex.toString());
+                    }
+                );
+            }
+        ).then(
+            // success
+            function(session) {
+                promise.succeed(session);
+            }
+            // // fail
+            //     console.error("glacier 登入失敗");
+            //     promise.fail(info);
+            // }
+        ).exception(
+            function(ex) {
+                promise.fail(ex);
+            }
+        );
 
         return promise;
     };

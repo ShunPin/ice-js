@@ -40,6 +40,7 @@ function Commander(config) {
     this.status.running = false;
     this.status.targetCount = config.targetCount;
     this.status.currentCount = 0;
+    this.status.loginCount = 0;
     this.status.finishCount = 0;
     this.status.failCount = 0;
 }
@@ -88,13 +89,22 @@ Commander.prototype.stop = function() {
     this._stop();
 };
 
-// 當 runner 任務完成時呼叫
-Commander.prototype.success = function(runner) {
-    log.info("StressCommander [SUCCESS],{0}#{1}".format("登入成功機器人", runner.runnerIndex));
+// 當 runner 登入成功時呼叫
+Commander.prototype.login = function(runner) {
+    log.info("StressCommander [LOGIN],{0}#{1}".format("登入成功機器人", runner.runnerIndex));
 
-    this.status.currentCount++;
+    this.status.loginCount++;
 
-    log.debug("StressCommander [STATUS]", JSON.stringify(this.status));
+    log.trace("StressCommander [STATUS]", JSON.stringify(this.status));
+};
+
+// 當 runner 斷線時呼叫
+Commander.prototype.disconnect = function(runner) {
+    log.info("StressCommander [DISCONNECT],{0}#{1}".format("與 gliacer 斷線機器人", runner.runnerIndex));
+
+    this.status.loginCount--;
+
+    log.trace("StressCommander [STATUS]", JSON.stringify(this.status));
 };
 
 // 當 runner 任務失敗時呼叫
@@ -102,19 +112,20 @@ Commander.prototype.fail = function(runner) {
     log.warn("StressCommander [FAIL],{0}#{1}".format("任務失敗機器人", runner.runnerIndex));
     filelogger.warn("StressCommander [FAIL],{0}#{1}".format("任務失敗機器人", runner.runnerIndex));
 
-    this.status.failCount++;
     this.status.currentCount--;
+    this.status.failCount++;
 
-    log.debug("StressCommander [STATUS]", JSON.stringify(this.status));
+    log.trace("StressCommander [STATUS]", JSON.stringify(this.status));
 };
 
+// 當 runner 任務完成時呼叫
 Commander.prototype.finish = function(runner) {
     log.info("StressCommander [FINISH],{0}#{1}".format("任務完成機器人", runner.runnerIndex));
 
-    this.status.finishCount++;
     this.status.currentCount--;
+    this.status.finishCount++;
 
-    log.debug("StressCommander [STATUS]", JSON.stringify(this.status));
+    log.trace("StressCommander [STATUS]", JSON.stringify(this.status));
 };
 
 // begin() 開始
@@ -138,9 +149,10 @@ Commander.prototype._each = function() {
         var runner = this.createRunner();
         if( runner != null && runner != undefined ) {
             runner.runnerIndex = this.runIndex;
-            this.runAction(runner);
-            // this.status.currentCount++;
             this.runIndex++;
+            this.status.currentCount++;
+
+            this.runAction(runner);
         }
     }
 };
