@@ -25,7 +25,7 @@
             this.GlacierConnectionString = loginInfo.GlacierConnectionString;
             // Node.js runtime, 用來壓測使用
             if( typeof window === 'undefined' ) {
-                this.GlacierConnectionString += ":tcp -h 127.0.0.1 -p " + this._getRandomPort(8000, 2);
+                this.GlacierConnectionString += ":tcp -h 127.0.0.1 -p " + this._getRandomPort(8000, 3);
             }
 
             console.log("connectionString: " + JSON.stringify(this.GlacierConnectionString));
