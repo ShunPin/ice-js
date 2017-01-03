@@ -147,7 +147,7 @@ var filelogger = require("log4js").getLogger("stressFile");
                     else {
                         delete self.AESKey;
                         // 取得 AESKey 失敗
-                        throw "getPreloginEncryptKey fail, response: " + JSON.stringify(response.data);
+                        throw "getPreloginEncryptKey fail, response: " + resString;
                     }
                 }
                 else {
@@ -497,11 +497,11 @@ var filelogger = require("log4js").getLogger("stressFile");
                         }
                     }
                     else {
-                        throw "GuestLogin fail, response: " + JSON.stringify(response.data);
+                        throw "GuestLogin fail, response: " + decString;
                     }
                 }
                 else {
-                    throw "GuestLogin fail, response: " + JSON.stringify(response.data);
+                    throw "GuestLogin fail, response is empty";
                 }
             })
             .catch(function(error) {

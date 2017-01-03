@@ -138,7 +138,7 @@ myApp.controller('stressChartCtrl', ['$scope', '$interval',
                         var point1 = {
                             name: pointName,
                             // data: [dateNow, Math.random() * 100]
-                            data: [dateNow, response.data[i].currentCount]
+                            data: [dateNow, response.data[i].loginCount]
                         };
 
                         var successPoint = {
@@ -159,7 +159,7 @@ myApp.controller('stressChartCtrl', ['$scope', '$interval',
 
                         // add the point
                         chartMap1[pointName].addPoint(point1.data, false, shift);
-                        chartMap2[successName].addPoint(successPoint.data, false, shift);
+                        // chartMap2[successName].addPoint(successPoint.data, false, shift);
                         chartMap2[failName].addPoint(failPoint.data, false, shift);
                     }
 
@@ -189,7 +189,7 @@ myApp.controller('stressChartCtrl', ['$scope', '$interval',
                 }
             },
             title: {
-                text: '壓測線圖-人數'
+                text: '壓測線圖-登入數'
             },
             xAxis: {
                 type: 'datetime',
@@ -216,7 +216,7 @@ myApp.controller('stressChartCtrl', ['$scope', '$interval',
                 }
             },
             title: {
-                text: '壓測線圖-成功vs失敗'
+                text: '壓測線圖-失敗'
             },
             xAxis: {
                 type: 'datetime',
