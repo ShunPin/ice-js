@@ -58,18 +58,17 @@ method.runAction = function(runner) {
     var isGuestLogin = (self.Config.method == 'GuestLogin');
     var stayTime = self.Config.stayTime * 1000;
     var setting = self.Config;
-    self.doLogout = false;
+    runner.doLogout = false;
 
     runner.setConnectionListener((method, data) => {
         switch( method ) {
             case ClientFacadeCommand.Disconnect:
-                if( !self.doLogout ) {
+                if( !runner.doLogout ) {
+                    logger.debug("斷線通知，機器人#" + runner.runnerIndex);
                     logger.warn(data);
                     filelogger.error(data);
 
                     runner.logout();
-
-                    self.fail(runner);
                 }
 
                 self.disconnect(runner);
@@ -86,8 +85,9 @@ method.runAction = function(runner) {
                 logger.debug("回呼註冊成功");
 
                 Ice.Promise.delay(stayTime).then(function() {
+                    logger.debug("任務結束，執行登出機器人#" + runner.runnerIndex);
                     // 登出
-                    self.doLogout = true;
+                    runner.doLogout = true;
                     runner.logout();
                     self.finish(runner);
 
