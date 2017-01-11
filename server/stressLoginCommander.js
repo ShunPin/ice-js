@@ -81,8 +81,8 @@ method.runAction = function(runner) {
             // 登入成功
             self.login(runner);
 
-            runner.registerAllFunctionalListener().then(function() {
-                logger.debug("回呼註冊成功");
+            // runner.registerAllFunctionalListener().then(function() {
+            //     logger.debug("回呼註冊成功");
 
                 Ice.Promise.delay(stayTime).then(function() {
                     logger.debug("任務結束，執行登出機器人#" + runner.runnerIndex);
@@ -90,6 +90,7 @@ method.runAction = function(runner) {
                     runner.doLogout = true;
                     runner.logout();
                     self.finish(runner);
+                    self.disconnect(runner);
 
                     // 修改狀態，並存檔
                     setting.running = false;
@@ -108,17 +109,17 @@ method.runAction = function(runner) {
                     // 加入 Offine User Array
                     user.addOffline(fastLoginInfo);
                 });
-            }, function(error) {
-                logger.debug("回呼註冊失敗");
-                if( !self.doLogout ) {
-                    logger.warn(error);
-                    filelogger.error(error);
-
-                    runner.logout();
-                }
-
-                self.fail(runner);
-            });
+            // }, function(error) {
+            //     logger.debug("回呼註冊失敗");
+            //     if( !self.doLogout ) {
+            //         logger.warn(error);
+            //         filelogger.error(error);
+            //
+            //         runner.logout();
+            //     }
+            //
+            //     self.fail(runner);
+            // });
         },
         function(error) {
             // 登入失敗

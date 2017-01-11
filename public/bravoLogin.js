@@ -1,7 +1,34 @@
 var logger = require("log4js").getLogger("stress");
 var filelogger = require("log4js").getLogger("stressFile");
 
+var rsaBody = null;
+
 (function(module, require, exports) {
+    /* ************************************************************************
+     SINGLETON CLASS DEFINITION
+     ************************************************************************ */
+    var singleton = function() {
+    };
+    singleton._body = null;
+    singleton._rsaKey = null;
+
+    /**
+     * Singleton getInstance definition
+     * @return singleton class
+     */
+    singleton.getBody = function() {
+        return this._body;
+    };
+    singleton.setBody = function(body) {
+        this._body = body;
+    };
+    singleton.getKey = function() {
+        return this._rsaKey;
+    };
+    singleton.setRsaKey = function(key) {
+        this._rsaKey = key;
+    };
+
     //axios.defaults.withCredentials = true;
     var RequestContract = require('../public/RequestContract').SGTech.AtlanticCity.RequestContract;
     var ClientFacade = require('../public/ClientDynamicInvoke').SGTech.AtlanticCity.ClientFacade;
@@ -103,7 +130,6 @@ var filelogger = require("log4js").getLogger("stressFile");
      */
     BravoLogin.prototype.createSession = function(isGuestLogin) {
         var self = this;
-
         var promise = new Ice.Promise();
 
         // 準備 GetPreloginEncryptKey Command Body
@@ -258,8 +284,8 @@ var filelogger = require("log4js").getLogger("stressFile");
             // 對 Ice :: addCallback
             var self = this;
             var proxy = self.glacier.communicator.stringToProxy(proxy_name);
-                // .ice_router(self.glacier.router)
-                // .ice_connectionId(self.glacier.router.ice_getConnectionId());
+            // .ice_router(self.glacier.router)
+            // .ice_connectionId(self.glacier.router.ice_getConnectionId());
 
             var invokablePrx = ClientFacade.InvokablePrx.uncheckedCast(proxy);
             var callbackPrx;
@@ -273,7 +299,7 @@ var filelogger = require("log4js").getLogger("stressFile");
                         // }
                         // else {
                         //     logger.info("Create new object adapter ..");
-                            return self.glacier.communicator.createObjectAdapterWithRouter("", self.glacier.router);
+                        return self.glacier.communicator.createObjectAdapterWithRouter("", self.glacier.router);
                         // }
                     }
                 ).then(function(adapter) {
@@ -354,8 +380,8 @@ var filelogger = require("log4js").getLogger("stressFile");
             // 對 Ice :: RemoveCallback
             var self = this;
             var proxy = self.glacier.communicator.stringToProxy(proxy_name);
-                // .ice_router(self.glacier.router)
-                // .ice_connectionId(self.glacier.router.ice_getConnectionId());
+            // .ice_router(self.glacier.router)
+            // .ice_connectionId(self.glacier.router.ice_getConnectionId());
 
             var invokablePrx = ClientFacade.InvokablePrx.uncheckedCast(proxy);
             if( typeof callbackInfo.callbackPrx != 'undefined' ) {
@@ -419,55 +445,55 @@ var filelogger = require("log4js").getLogger("stressFile");
         }
 
         loginPromise.then(
-            // success
-            function() {
-                self.glacier = new BravoGlacier(self.DeviceId, self.loginInfo);
-                return self.glacier.createSession().then(
-                // self.glacier = new BravoGlacier();
-                // return self.glacier.createSession(self.DeviceId, self.loginInfo).then(
-                    // success
-                    function(session) {
-                        logger.info("glacier 登入成功");
-                        // 通知 Listener
-                        self._callconnectionLister(BravoLogin.ClientFacadeCommand.Login);
-
-                        // 加上 connection callback
-                        var connection = self.glacier.router.ice_getCachedConnection();
-                        connection.setCallback({
-                            closed: function() {
-                                // 通知 Listener
-                                self._callconnectionLister(BravoLogin.ClientFacadeCommand.Disconnect, "Connection lost!!");
-                            }
-                        });
-                    },
-                    function(fail) {
-                        var methodArg = {
-                            CanRetry: true, //(是否可重試連線)
-                            // 由錯誤(例外)原因來分辨
-                            ExceptionMessage: fail.toString(), //(例外訊息)}
-                        };
-                        // 通知 listener
-                        self._callconnectionLister(BravoLogin.ClientFacadeCommand.LoginError, JSON.stringify(methodArg));
-
-                        // throw "glacier 登入失敗: " + fail;
-                        promise.fail("glacier 登入失敗: " + fail);
-                    }
-                ).exception(
-                    function(ex) {
-                        var methodArg = {
-                            CanRetry: false, //(是否可重試連線)
-                            // 由錯誤(例外)原因來分辨
-                            ExceptionMessage: ex.toString(), //(例外訊息)}
-                        };
-                        // 通知 listener
-                        self._callconnectionLister(BravoLogin.ClientFacadeCommand.LoginError, JSON.stringify(methodArg));
-
-                        // throw "glacier 登入失敗: " + ex.toString();
-                        promise.fail("glacier 登入失敗: " + ex.toString());
-                    }
-                );
-            }
-        ).then(
+            //     // success
+            //     function() {
+            //         self.glacier = new BravoGlacier(self.DeviceId, self.loginInfo);
+            //         return self.glacier.createSession().then(
+            //         // self.glacier = new BravoGlacier();
+            //         // return self.glacier.createSession(self.DeviceId, self.loginInfo).then(
+            //             // success
+            //             function(session) {
+            //                 logger.info("glacier 登入成功");
+            //                 // 通知 Listener
+            //                 self._callconnectionLister(BravoLogin.ClientFacadeCommand.Login);
+            //
+            //                 // 加上 connection callback
+            //                 var connection = self.glacier.router.ice_getCachedConnection();
+            //                 connection.setCallback({
+            //                     closed: function() {
+            //                         // 通知 Listener
+            //                         self._callconnectionLister(BravoLogin.ClientFacadeCommand.Disconnect, "Connection lost!!");
+            //                     }
+            //                 });
+            //             },
+            //             function(fail) {
+            //                 var methodArg = {
+            //                     CanRetry: true, //(是否可重試連線)
+            //                     // 由錯誤(例外)原因來分辨
+            //                     ExceptionMessage: fail.toString(), //(例外訊息)}
+            //                 };
+            //                 // 通知 listener
+            //                 self._callconnectionLister(BravoLogin.ClientFacadeCommand.LoginError, JSON.stringify(methodArg));
+            //
+            //                 // throw "glacier 登入失敗: " + fail;
+            //                 promise.fail("glacier 登入失敗: " + fail);
+            //             }
+            //         ).exception(
+            //             function(ex) {
+            //                 var methodArg = {
+            //                     CanRetry: false, //(是否可重試連線)
+            //                     // 由錯誤(例外)原因來分辨
+            //                     ExceptionMessage: ex.toString(), //(例外訊息)}
+            //                 };
+            //                 // 通知 listener
+            //                 self._callconnectionLister(BravoLogin.ClientFacadeCommand.LoginError, JSON.stringify(methodArg));
+            //
+            //                 // throw "glacier 登入失敗: " + ex.toString();
+            //                 promise.fail("glacier 登入失敗: " + ex.toString());
+            //             }
+            //         );
+            //     }
+            // ).then(
             // success
             function(session) {
                 promise.succeed(session);
@@ -722,14 +748,31 @@ var filelogger = require("log4js").getLogger("stressFile");
     };
 
     BravoLogin.prototype._getPreloginEncryptKeyCmd = function() {
-        if( this.RSAKey ) delete this.RSAKey;
-
-        var pubKeyBase64 = this._getRsaPublicKey();
-        var body = {
-            "command": "GetPreloginEncryptKey",
-            "data": JSON.stringify({ "Key": pubKeyBase64 }),
-            "product": "apk",
-        };
+        // if( this.RSAKey ) delete this.RSAKey;
+        //
+        // var pubKeyBase64 = this._getRsaPublicKey();
+        // var body = {
+        //     "command": "GetPreloginEncryptKey",
+        //     "data": JSON.stringify({ "Key": pubKeyBase64 }),
+        //     "product": "apk",
+        // };
+        //
+        // return body;
+        var body = singleton.getBody();
+        if( body ) {
+            this.RSAKey = singleton.getKey();
+            return body;
+        }
+        else {
+            var pubKeyBase64 = this._getRsaPublicKey();
+            body = {
+                "command": "GetPreloginEncryptKey",
+                "data": JSON.stringify({ "Key": pubKeyBase64 }),
+                "product": "apk",
+            };
+            singleton.setBody(body);
+            singleton.setRsaKey(this.RSAKey);
+        }
 
         return body;
     };
