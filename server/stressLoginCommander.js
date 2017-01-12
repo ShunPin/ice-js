@@ -90,7 +90,6 @@ method.runAction = function(runner) {
                     runner.doLogout = true;
                     runner.logout();
                     self.finish(runner);
-                    self.disconnect(runner);
 
                     // 修改狀態，並存檔
                     setting.running = false;
