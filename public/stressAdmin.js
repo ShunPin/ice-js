@@ -124,32 +124,29 @@ myApp.controller('stressChartCtrl', ['$scope', '$interval',
                     // 記錄 response Map(Name,Data)
                     for (var i = 0; i < response.data.length; i++) {
                         var pointName = response.data[i].id;
-                        var successName = pointName + "-" + "success";
+                        var disconnectName = pointName + "-" + "disconnect";
                         var failName = pointName + "-" + "fail";
 
                         // 新增 線 (addSeries)
                         if (chartMap1.hasOwnProperty(pointName) == false) {
                             chartMap1[pointName] = chart1.addSeries({name: pointName, data: []}, false);
-                            chartMap2[successName] = chart2.addSeries({name: successName, data: []}, false);
+                            chartMap2[disconnectName] = chart2.addSeries({name: disconnectName, data: []}, false);
                             chartMap2[failName] = chart2.addSeries({name: failName, data: []}, false);
                         }
 
                         // 新增 顯示的資料
                         var point1 = {
                             name: pointName,
-                            // data: [dateNow, Math.random() * 100]
-                            data: [dateNow, response.data[i].currentCount]
+                            data: [dateNow, response.data[i].loginCount]
                         };
 
-                        var successPoint = {
-                            name: successName,
-                            // data: [dateNow, Math.random() * 100]
-                            data: [dateNow, response.data[i].finishCount]
+                        var disconnectPoint = {
+                            name: disconnectName,
+                            data: [dateNow, response.data[i].disconnectCount]
                         };
 
                         var failPoint = {
                             name: failName,
-                            // data: [dateNow, Math.random() * 100]
                             data: [dateNow, response.data[i].failCount]
                         };
 
@@ -159,7 +156,7 @@ myApp.controller('stressChartCtrl', ['$scope', '$interval',
 
                         // add the point
                         chartMap1[pointName].addPoint(point1.data, false, shift);
-                        chartMap2[successName].addPoint(successPoint.data, false, shift);
+                        chartMap2[disconnectName].addPoint(disconnectPoint.data, false, shift);
                         chartMap2[failName].addPoint(failPoint.data, false, shift);
                     }
 
@@ -189,7 +186,7 @@ myApp.controller('stressChartCtrl', ['$scope', '$interval',
                 }
             },
             title: {
-                text: '壓測線圖-人數'
+                text: '壓測線圖-登入數'
             },
             xAxis: {
                 type: 'datetime',
@@ -216,7 +213,7 @@ myApp.controller('stressChartCtrl', ['$scope', '$interval',
                 }
             },
             title: {
-                text: '壓測線圖-成功vs失敗'
+                text: '壓測線圖-失敗'
             },
             xAxis: {
                 type: 'datetime',

@@ -103,6 +103,9 @@ Commander.prototype.disconnect = function(runner) {
     log.info("StressCommander [DISCONNECT],{0}#{1}".format("與 gliacer 斷線機器人", runner.runnerIndex));
 
     this.status.loginCount--;
+    if( !runner.doLogout ) {
+        this.status.disconnectCount++;
+    }
 
     log.trace("StressCommander [STATUS]", JSON.stringify(this.status));
 };
@@ -135,6 +138,7 @@ Commander.prototype._begin = function() {
     this.status.running = true;
     this.status.targetCount = this.Config.targetCount;
     this.status.currentCount = 0;
+    this.status.disconnectCount = 0;
     this.status.finishCount = 0;
     this.status.failCount = 0;
     this.runIndex = 0;

@@ -2,6 +2,31 @@ var logger = require("log4js").getLogger("stress");
 var filelogger = require("log4js").getLogger("stressFile");
 
 (function(module, require, exports) {
+    /* ************************************************************************
+     SINGLETON CLASS DEFINITION
+     ************************************************************************ */
+    var singleton = function() {
+    };
+    singleton._body = null;
+    singleton._rsaKey = null;
+
+    /**
+     * Singleton getInstance definition
+     * @return singleton class
+     */
+    singleton.getBody = function() {
+        return this._body;
+    };
+    singleton.setBody = function(body) {
+        this._body = body;
+    };
+    singleton.getKey = function() {
+        return this._rsaKey;
+    };
+    singleton.setRsaKey = function(key) {
+        this._rsaKey = key;
+    };
+
     //axios.defaults.withCredentials = true;
     var RequestContract = require('../public/RequestContract').SGTech.AtlanticCity.RequestContract;
     var ClientFacade = require('../public/ClientDynamicInvoke').SGTech.AtlanticCity.ClientFacade;
@@ -33,7 +58,8 @@ var filelogger = require("log4js").getLogger("stressFile");
     // interface.
     //
     var InvokeCallback = Ice.Class(ClientFacade.Callbackable, {
-        __init__: function(callback) {
+        __init__: function(name, callback) {
+            this.proxyName = name;
             this.callbackFn = callback;
         },
         Invoke: function(method, input) {
@@ -42,7 +68,7 @@ var filelogger = require("log4js").getLogger("stressFile");
                 result_message: ""
             };
             var resultString = JSON.stringify(result);
-            console.log("Invoke callback #" + this.proxyName + "//" + method + "//" + resultString + "//" + input);
+            logger.info("Invoke callback #" + this.proxyName + "//" + method + "//" + resultString + "//" + input);
             this.callbackFn(method, resultString, input);
         }
     });
@@ -102,7 +128,6 @@ var filelogger = require("log4js").getLogger("stressFile");
      */
     BravoLogin.prototype.createSession = function(isGuestLogin) {
         var self = this;
-
         var promise = new Ice.Promise();
 
         // 準備 GetPreloginEncryptKey Command Body
@@ -110,12 +135,12 @@ var filelogger = require("log4js").getLogger("stressFile");
         this.axiosConfig.headers['Cookie'] = self.SessionCookies;
         axios.post('/api/call', cmdBody, this.axiosConfig)
             .then(function(response) {
-                //console.log("response.headers:",JSON.stringify(response.headers));
+                //logger.info("response.headers:",JSON.stringify(response.headers));
                 // Check Cookie and save
                 var cookie = response.headers['set-cookie'];
                 if( cookie != undefined ) {
                     self.SessionCookies = cookie;
-                    //console.log("Set-Cookie:", cookie);
+                    //logger.info("Set-Cookie:", cookie);
                 }
 
                 // success
@@ -147,7 +172,7 @@ var filelogger = require("log4js").getLogger("stressFile");
                     else {
                         delete self.AESKey;
                         // 取得 AESKey 失敗
-                        throw "getPreloginEncryptKey fail, response: " + JSON.stringify(response.data);
+                        throw "getPreloginEncryptKey fail, response: " + resString;
                     }
                 }
                 else {
@@ -183,6 +208,26 @@ var filelogger = require("log4js").getLogger("stressFile");
                 logger.trace("###################");
             }, proxy[1])
         )).then(() => promise.succeed()).exception(() => promise.fail());
+        // var proxy = this.glacier.communicator.stringToProxy("ClientFacade/Menu")
+        //     .ice_router(this.glacier.router)
+        //     .ice_connectionId(this.glacier.router.ice_getConnectionId());
+        //
+        // var invokablePrx = ClientFacade.InvokablePrx.uncheckedCast(proxy);
+        // invokablePrx.Invoke("GetSystemTime", "{}", this.glacier.session).then(
+        //     function(response, result) {
+        //         logger.info("Invoke: " + response + ", " + result);
+        //         promise.succeed();
+        //     },
+        //     function(error) {
+        //         logger.info("Invoke Error: " + error);
+        //         promise.fail();
+        //     }
+        // ).exception(
+        //     function(ex) {
+        //         logger.info("Invoke Exception: " + ex);
+        //         promise.fail();
+        //     }
+        // );
 
         return promise;
     };
@@ -237,20 +282,33 @@ var filelogger = require("log4js").getLogger("stressFile");
             // 對 Ice :: addCallback
             var self = this;
             var proxy = self.glacier.communicator.stringToProxy(proxy_name);
+            // .ice_router(self.glacier.router)
+            // .ice_connectionId(self.glacier.router.ice_getConnectionId());
+
             var invokablePrx = ClientFacade.InvokablePrx.uncheckedCast(proxy);
             var callbackPrx;
             var categoryString = "";
             promise =
                 self.glacier.router.getCategoryForClient().then(function(category) {
                         categoryString = category;
+
+                        // if( self.glacier.getInternalAdapter() ) {
+                        //     return self.glacier.getInternalAdapter();
+                        // }
+                        // else {
+                        //     logger.info("Create new object adapter ..");
                         return self.glacier.communicator.createObjectAdapterWithRouter("", self.glacier.router);
+                        // }
                     }
                 ).then(function(adapter) {
+                    // self.glacier.setInternalAdapter(adapter);
+                    // adapter.activate();
                     //
                     // Create a callback receiver servant and add it to
                     // the object adapter.
                     //
-                    var r = adapter.add(new InvokeCallback(callback), new Ice.Identity(Ice.generateUUID(), categoryString));
+                    var r = adapter.add(new InvokeCallback(proxy_name, callback), new Ice.Identity(Ice.generateUUID(), categoryString));
+                    // var r = self.glacier.internalAdapter.add(new InvokeCallback(proxy_name, callback), new Ice.Identity(Ice.generateUUID(), category));
 
                     //
                     // Set the connection adapter.
@@ -269,7 +327,7 @@ var filelogger = require("log4js").getLogger("stressFile");
                 }).then(function(result) {
                     if( result.resultCode == RequestContract.RequestResult.ResultCode_Success ) {
                         // AddCallback 成功
-                        //console.log(proxy_name, "AddCallback 成功");
+                        logger.debug(proxy_name, "AddCallback 成功");
 
                         // 計錄callbackPrx 到 functionListener 中
                         self._functionListener[proxy_name].callbackPrx = callbackPrx;
@@ -285,18 +343,17 @@ var filelogger = require("log4js").getLogger("stressFile");
                         filelogger.warn(proxy_name, "AddCallback 失敗!!", "resultMessage=", result.resultMessage);
                         self._callconnectionLister(BravoLogin.ClientFacadeCommand.InvokeError, JSON.stringify({ ProxyName: proxy_name }));
 
-                        // promise.fail();
-                        throw JSON.stringify(result);
+                        promise.fail(JSON.stringify(result));
                     }
 
                 }).exception(function(ex) {
                     // InvokeError
-                    //console.log(proxy_name, "AddCallback Error", ex.toString());
+                    logger.error(proxy_name, "AddCallback Error: ", ex);
 
                     self._callconnectionLister(BravoLogin.ClientFacadeCommand.AddCallbackError, JSON.stringify({ ProxyName: proxy_name }));
 
                     // promise.fail();
-                    throw JSON.stringify(result);
+                    promise.fail(ex.toString());
                 });
         }
         else {
@@ -321,6 +378,9 @@ var filelogger = require("log4js").getLogger("stressFile");
             // 對 Ice :: RemoveCallback
             var self = this;
             var proxy = self.glacier.communicator.stringToProxy(proxy_name);
+            // .ice_router(self.glacier.router)
+            // .ice_connectionId(self.glacier.router.ice_getConnectionId());
+
             var invokablePrx = ClientFacade.InvokablePrx.uncheckedCast(proxy);
             if( typeof callbackInfo.callbackPrx != 'undefined' ) {
                 invokablePrx.RemoveCallback(callbackPrx, self.glacier.session).then(
@@ -385,17 +445,18 @@ var filelogger = require("log4js").getLogger("stressFile");
         loginPromise.then(
             // success
             function() {
-                var glacier = new BravoGlacier(self.DeviceId, self.loginInfo);
-                self.glacier = glacier;
-                return glacier.createSession().then(
+                self.glacier = new BravoGlacier(self.DeviceId, self.loginInfo);
+                return self.glacier.createSession().then(
+                    // self.glacier = new BravoGlacier();
+                    // return self.glacier.createSession(self.DeviceId, self.loginInfo).then(
                     // success
                     function(session) {
-                        console.log("glacier 登入成功");
+                        logger.info("glacier 登入成功");
                         // 通知 Listener
                         self._callconnectionLister(BravoLogin.ClientFacadeCommand.Login);
 
                         // 加上 connection callback
-                        var connection = glacier.router.ice_getCachedConnection();
+                        var connection = self.glacier.router.ice_getCachedConnection();
                         connection.setCallback({
                             closed: function() {
                                 // 通知 Listener
@@ -435,10 +496,6 @@ var filelogger = require("log4js").getLogger("stressFile");
             function(session) {
                 promise.succeed(session);
             }
-            // // fail
-            //     console.error("glacier 登入失敗");
-            //     promise.fail(info);
-            // }
         ).exception(
             function(ex) {
                 promise.fail(ex);
@@ -485,7 +542,6 @@ var filelogger = require("log4js").getLogger("stressFile");
                     var result = JSON.parse(decString);
 
                     if( result && result.result_code == "OK" ) {
-                        console.log("API_Calle::OK");
                         var loginInfo = JSON.parse(result.result_data);
                         if( loginInfo ) {
                             // 計錄 loginInfo
@@ -497,11 +553,11 @@ var filelogger = require("log4js").getLogger("stressFile");
                         }
                     }
                     else {
-                        throw "GuestLogin fail, response: " + JSON.stringify(response.data);
+                        throw "GuestLogin fail, response: " + decString;
                     }
                 }
                 else {
-                    throw "GuestLogin fail, response: " + JSON.stringify(response.data);
+                    throw "GuestLogin fail, response is empty";
                 }
             })
             .catch(function(error) {
@@ -587,9 +643,7 @@ var filelogger = require("log4js").getLogger("stressFile");
         var pubKeyXML = "<RSAKeyValue><Modulus>" + pubKeyString + "</Modulus>" + "<Exponent>" + expKeyString + "</Exponent></RSAKeyValue>";
 
         // 以 Base64 String 編碼
-        var pubKeyBase64 = CryptoJS.enc.Latin1.parse(pubKeyXML).toString(CryptoJS.enc.Base64);
-
-        return pubKeyBase64;
+        return CryptoJS.enc.Latin1.parse(pubKeyXML).toString(CryptoJS.enc.Base64);
     };
 
     /**
@@ -597,8 +651,7 @@ var filelogger = require("log4js").getLogger("stressFile");
      * @param {String} key
      * @param {String} iv
      */
-    BravoLogin.prototype._setAesKey = function(key,
-                                               iv) {
+    BravoLogin.prototype._setAesKey = function(key, iv) {
         this.AESKey.Key = key.substring(0);
         this.AESKey.IV = iv.substring(0);
     };
@@ -686,30 +739,36 @@ var filelogger = require("log4js").getLogger("stressFile");
     };
 
     BravoLogin.prototype._getPreloginEncryptKeyCmd = function() {
-        if( this.RSAKey ) delete this.RSAKey;
+        var body = singleton.getBody();
+        if( body ) {
+            this.RSAKey = singleton.getKey();
+        }
+        else {
+            var pubKeyBase64 = this._getRsaPublicKey();
 
-        var pubKeyBase64 = this._getRsaPublicKey();
-        var body = {
-            "command": "GetPreloginEncryptKey",
-            "data": JSON.stringify({ "Key": pubKeyBase64 }),
-            "product": "apk",
-        };
+            body = {
+                "command": "GetPreloginEncryptKey",
+                "data": JSON.stringify({ "Key": pubKeyBase64 }),
+                "product": "apk",
+            };
+
+            singleton.setBody(body);
+            singleton.setRsaKey(this.RSAKey);
+        }
 
         return body;
     };
 
     BravoLogin.prototype._getGuestLoginCmd = function() {
-        var body = {
+        return {
             "command": "GuestLogin",
             "data": JSON.stringify({ "DeviceId": this.DeviceId }),
             "product": "apk",
         };
-
-        return body;
     };
 
     BravoLogin.prototype._getFastLoginCmd = function() {
-        var body = {
+        return {
             "command": "FastLogin",
             "data": JSON.stringify({
                 "MemberId": this.loginInfo.MemberId,
@@ -718,8 +777,6 @@ var filelogger = require("log4js").getLogger("stressFile");
             }),
             "product": "apk",
         };
-
-        return body;
     };
 
     exports.BravoLogin = BravoLogin;
