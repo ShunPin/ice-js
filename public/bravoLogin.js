@@ -1,8 +1,6 @@
 var logger = require("log4js").getLogger("stress");
 var filelogger = require("log4js").getLogger("stressFile");
 
-var rsaBody = null;
-
 (function(module, require, exports) {
     /* ************************************************************************
      SINGLETON CLASS DEFINITION
@@ -445,63 +443,59 @@ var rsaBody = null;
         }
 
         loginPromise.then(
-            //     // success
-            //     function() {
-            //         self.glacier = new BravoGlacier(self.DeviceId, self.loginInfo);
-            //         return self.glacier.createSession().then(
-            //         // self.glacier = new BravoGlacier();
-            //         // return self.glacier.createSession(self.DeviceId, self.loginInfo).then(
-            //             // success
-            //             function(session) {
-            //                 logger.info("glacier 登入成功");
-            //                 // 通知 Listener
-            //                 self._callconnectionLister(BravoLogin.ClientFacadeCommand.Login);
-            //
-            //                 // 加上 connection callback
-            //                 var connection = self.glacier.router.ice_getCachedConnection();
-            //                 connection.setCallback({
-            //                     closed: function() {
-            //                         // 通知 Listener
-            //                         self._callconnectionLister(BravoLogin.ClientFacadeCommand.Disconnect, "Connection lost!!");
-            //                     }
-            //                 });
-            //             },
-            //             function(fail) {
-            //                 var methodArg = {
-            //                     CanRetry: true, //(是否可重試連線)
-            //                     // 由錯誤(例外)原因來分辨
-            //                     ExceptionMessage: fail.toString(), //(例外訊息)}
-            //                 };
-            //                 // 通知 listener
-            //                 self._callconnectionLister(BravoLogin.ClientFacadeCommand.LoginError, JSON.stringify(methodArg));
-            //
-            //                 // throw "glacier 登入失敗: " + fail;
-            //                 promise.fail("glacier 登入失敗: " + fail);
-            //             }
-            //         ).exception(
-            //             function(ex) {
-            //                 var methodArg = {
-            //                     CanRetry: false, //(是否可重試連線)
-            //                     // 由錯誤(例外)原因來分辨
-            //                     ExceptionMessage: ex.toString(), //(例外訊息)}
-            //                 };
-            //                 // 通知 listener
-            //                 self._callconnectionLister(BravoLogin.ClientFacadeCommand.LoginError, JSON.stringify(methodArg));
-            //
-            //                 // throw "glacier 登入失敗: " + ex.toString();
-            //                 promise.fail("glacier 登入失敗: " + ex.toString());
-            //             }
-            //         );
-            //     }
-            // ).then(
+            // success
+            function() {
+                self.glacier = new BravoGlacier(self.DeviceId, self.loginInfo);
+                return self.glacier.createSession().then(
+                    // self.glacier = new BravoGlacier();
+                    // return self.glacier.createSession(self.DeviceId, self.loginInfo).then(
+                    // success
+                    function(session) {
+                        logger.info("glacier 登入成功");
+                        // 通知 Listener
+                        self._callconnectionLister(BravoLogin.ClientFacadeCommand.Login);
+
+                        // 加上 connection callback
+                        var connection = self.glacier.router.ice_getCachedConnection();
+                        connection.setCallback({
+                            closed: function() {
+                                // 通知 Listener
+                                self._callconnectionLister(BravoLogin.ClientFacadeCommand.Disconnect, "Connection lost!!");
+                            }
+                        });
+                    },
+                    function(fail) {
+                        var methodArg = {
+                            CanRetry: true, //(是否可重試連線)
+                            // 由錯誤(例外)原因來分辨
+                            ExceptionMessage: fail.toString(), //(例外訊息)}
+                        };
+                        // 通知 listener
+                        self._callconnectionLister(BravoLogin.ClientFacadeCommand.LoginError, JSON.stringify(methodArg));
+
+                        // throw "glacier 登入失敗: " + fail;
+                        promise.fail("glacier 登入失敗: " + fail);
+                    }
+                ).exception(
+                    function(ex) {
+                        var methodArg = {
+                            CanRetry: false, //(是否可重試連線)
+                            // 由錯誤(例外)原因來分辨
+                            ExceptionMessage: ex.toString(), //(例外訊息)}
+                        };
+                        // 通知 listener
+                        self._callconnectionLister(BravoLogin.ClientFacadeCommand.LoginError, JSON.stringify(methodArg));
+
+                        // throw "glacier 登入失敗: " + ex.toString();
+                        promise.fail("glacier 登入失敗: " + ex.toString());
+                    }
+                );
+            }
+        ).then(
             // success
             function(session) {
                 promise.succeed(session);
             }
-            // // fail
-            //     logger.error("glacier 登入失敗");
-            //     promise.fail(info);
-            // }
         ).exception(
             function(ex) {
                 promise.fail(ex);
@@ -649,9 +643,7 @@ var rsaBody = null;
         var pubKeyXML = "<RSAKeyValue><Modulus>" + pubKeyString + "</Modulus>" + "<Exponent>" + expKeyString + "</Exponent></RSAKeyValue>";
 
         // 以 Base64 String 編碼
-        var pubKeyBase64 = CryptoJS.enc.Latin1.parse(pubKeyXML).toString(CryptoJS.enc.Base64);
-
-        return pubKeyBase64;
+        return CryptoJS.enc.Latin1.parse(pubKeyXML).toString(CryptoJS.enc.Base64);
     };
 
     /**
@@ -659,8 +651,7 @@ var rsaBody = null;
      * @param {String} key
      * @param {String} iv
      */
-    BravoLogin.prototype._setAesKey = function(key,
-                                               iv) {
+    BravoLogin.prototype._setAesKey = function(key, iv) {
         this.AESKey.Key = key.substring(0);
         this.AESKey.IV = iv.substring(0);
     };
@@ -748,28 +739,19 @@ var rsaBody = null;
     };
 
     BravoLogin.prototype._getPreloginEncryptKeyCmd = function() {
-        // if( this.RSAKey ) delete this.RSAKey;
-        //
-        // var pubKeyBase64 = this._getRsaPublicKey();
-        // var body = {
-        //     "command": "GetPreloginEncryptKey",
-        //     "data": JSON.stringify({ "Key": pubKeyBase64 }),
-        //     "product": "apk",
-        // };
-        //
-        // return body;
         var body = singleton.getBody();
         if( body ) {
             this.RSAKey = singleton.getKey();
-            return body;
         }
         else {
             var pubKeyBase64 = this._getRsaPublicKey();
+
             body = {
                 "command": "GetPreloginEncryptKey",
                 "data": JSON.stringify({ "Key": pubKeyBase64 }),
                 "product": "apk",
             };
+
             singleton.setBody(body);
             singleton.setRsaKey(this.RSAKey);
         }
@@ -778,17 +760,15 @@ var rsaBody = null;
     };
 
     BravoLogin.prototype._getGuestLoginCmd = function() {
-        var body = {
+        return {
             "command": "GuestLogin",
             "data": JSON.stringify({ "DeviceId": this.DeviceId }),
             "product": "apk",
         };
-
-        return body;
     };
 
     BravoLogin.prototype._getFastLoginCmd = function() {
-        var body = {
+        return {
             "command": "FastLogin",
             "data": JSON.stringify({
                 "MemberId": this.loginInfo.MemberId,
@@ -797,8 +777,6 @@ var rsaBody = null;
             }),
             "product": "apk",
         };
-
-        return body;
     };
 
     exports.BravoLogin = BravoLogin;
