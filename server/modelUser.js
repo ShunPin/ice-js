@@ -7,6 +7,7 @@
 
 // ORM - Sequelize
 var Sequelize = require('sequelize');
+var MaxOfflineUsers = 5000;
 
 function helper() {
     this.isInit = false;
@@ -44,7 +45,8 @@ function helper() {
             // 將 User 匯入 offlineUsers
             self.tb_Users.findAll().then(
                 function (array) {
-                    for (var i = 0; i < array.length; i++) {
+                    // 最多放 5000 筆帳號使用即可
+                    for (var i = 0; i < array.length && i< MaxOfflineUsers; i++) {
                         var rawUser = array[i].dataValues;
                         self.offlineUsers.push(rawUser);
                     }
@@ -115,7 +117,9 @@ helper.prototype.getOffline = function () {
 };
 
 helper.prototype.addOffline = function (value) {
-    this.offlineUsers.push(value);
+    if (this.offlineUsers.length < MaxOfflineUsers) {
+        this.offlineUsers.push(value);
+    }
 };
 
 /* ************************************************************************

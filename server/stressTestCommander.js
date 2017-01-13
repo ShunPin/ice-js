@@ -33,7 +33,7 @@ method.runAction = function (runner) {
 
     var timerID = setInterval(function () {
         runner.succeed();
-        self.success(runner);
+        self.finish(runner);
         clearInterval(timerID);
     }, stayTime);
 };
