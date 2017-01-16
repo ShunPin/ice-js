@@ -66,7 +66,7 @@ method.runAction = function(runner) {
                 if( !runner.doLogout ) {
                     logger.debug("斷線通知，機器人#" + runner.runnerIndex);
                     logger.warn(data);
-                    filelogger.error(data);
+                    filelogger.error('ice disconnect, data: ' + data);
 
                     runner.logout();
                 }
@@ -115,7 +115,7 @@ method.runAction = function(runner) {
                 logger.debug("回呼註冊失敗");
                 if( !runner.doLogout ) {
                     logger.warn(error);
-                    filelogger.error(error);
+                    filelogger.error('register callback fail, error: ' + error);
 
                     runner.logout();
                 }
@@ -142,7 +142,7 @@ method.runAction = function(runner) {
         }
     ).exception(function(error) {
         logger.error(error);
-        filelogger.error(error);
+        filelogger.error('promise exception, error: ' + error);
 
         self.fail(runner);
     });
