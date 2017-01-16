@@ -97,20 +97,23 @@ method.runAction = function(runner) {
 
                     // 記錄 快速登入的  資訊
                     var fastLoginInfo = {
-                        "MemberId": runner.loginInfo.MemberId,
-                        "LoginToken": runner.loginInfo.LoginToken,
-                        "DeviceId": runner.DeviceId,
+                        MemberId: runner.loginInfo.MemberId,
+                        LoginToken: runner.loginInfo.LoginToken,
+                        DeviceId: runner.DeviceId,
                     };
                     //console.log("快速登入可用的資訊", JSON.stringify(fastLoginInfo));
 
-                    // 加入 DB
-                    user.add(fastLoginInfo);
+                    if (isGuestLogin) {
+                        // 加入 DB
+                        user.add(fastLoginInfo);
+                    }
+
                     // 加入 Offine User Array
                     user.addOffline(fastLoginInfo);
                 });
             }, function(error) {
                 logger.debug("回呼註冊失敗");
-                if( !self.doLogout ) {
+                if( !runner.doLogout ) {
                     logger.warn(error);
                     filelogger.error(error);
 
@@ -125,21 +128,20 @@ method.runAction = function(runner) {
             // filelogger.error("登入失敗");
             throw "runner.createSession::登入失敗::[" + error + "]";
 
-            // Lune: 失敗應該不用記錄資訊吧？ ..
-            // // 快速登入
-            // if( isGuestLogin ) {
-            //
-            // }
-            // else {
-            //     // 將快速登入資訊回收
-            //     // 記錄 快速登入的  資訊
-            //     var fastLoginInfo = {
-            //         "MemberId": runner.loginInfo.MemberId,
-            //         "LoginToken": runner.loginInfo.LoginToken,
-            //         "DeviceId": runner.DeviceId,
-            //     };
-            //     user.addOffline(fastLoginInfo);
-            // }
+            if( isGuestLogin ) {
+
+            }
+            else {
+                // 快速登入
+                // 將快速登入資訊回收
+                // 記錄 快速登入的  資訊
+                var fastLoginInfo = {
+                    MemberId: runner.loginInfo.MemberId,
+                    LoginToken: runner.loginInfo.LoginToken,
+                    DeviceId: runner.DeviceId,
+                };
+                user.addOffline(fastLoginInfo);
+            }
         }
     ).exception(function(error) {
         logger.error(error);

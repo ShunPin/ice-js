@@ -36,7 +36,7 @@ function helper() {
 
         self.tb_Users = this.sequelizeDB.define('StressUsers', {
             id: {type: Sequelize.INTEGER, autoIncrement: true, primaryKey: true, unique: true},
-            MemberId: {type: Sequelize.INTEGER, allowNull: false},
+            MemberId: {type: Sequelize.INTEGER, allowNull: false, unique: true},
             DeviceId: {type: Sequelize.TEXT, allowNull: false},
             LoginToken: {type: Sequelize.TEXT, allowNull: false},
         });
