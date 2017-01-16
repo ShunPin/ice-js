@@ -103,7 +103,7 @@ method.runAction = function(runner) {
                     };
                     //console.log("快速登入可用的資訊", JSON.stringify(fastLoginInfo));
 
-                    if (isGuestLogin) {
+                    if( isGuestLogin ) {
                         // 加入 DB
                         user.add(fastLoginInfo);
                     }
@@ -124,24 +124,21 @@ method.runAction = function(runner) {
             });
         },
         function(error) {
-            // 登入失敗
-            // filelogger.error("登入失敗");
-            throw "runner.createSession::登入失敗::[" + error + "]";
-
             if( isGuestLogin ) {
 
             }
             else {
-                // 快速登入
                 // 將快速登入資訊回收
-                // 記錄 快速登入的  資訊
-                var fastLoginInfo = {
+                user.addOffline({
                     MemberId: runner.loginInfo.MemberId,
                     LoginToken: runner.loginInfo.LoginToken,
                     DeviceId: runner.DeviceId,
-                };
-                user.addOffline(fastLoginInfo);
+                });
             }
+
+            // 登入失敗
+            // filelogger.error("登入失敗");
+            throw "runner.createSession::登入失敗::[" + error + "]";
         }
     ).exception(function(error) {
         logger.error(error);

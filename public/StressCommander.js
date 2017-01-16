@@ -104,6 +104,7 @@ Commander.prototype.disconnect = function(runner) {
 
     this.status.loginCount--;
     if( !runner.doLogout ) {
+        this.status.currentCount--;
         this.status.disconnectCount++;
     }
 
