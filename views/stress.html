@@ -41,6 +41,7 @@
                             <th>Finish</th>
 	                        <th>Disconnect</th>
                             <th>Fail</th>
+	                        <th>Login Per Sec.</th>
                         </tr>
                         <tr ng-repeat="x in infos | orderBy : 'id'" class={{x.type}}>
                             <td>{{ x.id }}</td>
@@ -51,6 +52,7 @@
                             <td>{{x.finishCount}}</td>
 	                        <td>{{x.disconnectCount}}</td>
                             <td>{{x.failCount}}</td>
+	                        <td>{{x.loginPerSecond}}</td>
                         </tr>
                     </table>
                 </div>

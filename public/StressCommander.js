@@ -34,7 +34,7 @@ if( !String.prototype.format ) {
 function Commander(config) {
     this.Config = config;
     this.runIndex = -1;
-    this.intervalID = undefined;    // Timer ID
+    this.intervalID = [];    // Timer ID
     this.status = {};
     this.status.id = config.id;
     this.status.running = false;
@@ -43,6 +43,9 @@ function Commander(config) {
     this.status.loginCount = 0;
     this.status.finishCount = 0;
     this.status.failCount = 0;
+
+    this.preLoginCount = 0;
+    this.preFinishCount = 0;
 }
 
 // 回報運行狀態
@@ -143,7 +146,8 @@ Commander.prototype._begin = function() {
     this.status.finishCount = 0;
     this.status.failCount = 0;
     this.runIndex = 0;
-    this.intervalID = setInterval(this._each.bind(this), this.Config.interval);
+    this.intervalID.push(setInterval(this._each.bind(this), this.Config.interval));
+    this.intervalID.push(setInterval(this._calculateAvgLogin.bind(this), 10000));
 };
 
 // 還沒達到預定數量時，會依照速度設定呼叫
@@ -164,11 +168,19 @@ Commander.prototype._each = function() {
 
 // 停止後處理
 Commander.prototype._stop = function() {
-    if( this.intervalID != undefined ) {
-        clearInterval(this.intervalID);
-        this.intervalID = undefined;
-    }
+    this.intervalID.forEach(id => clearInterval(id));
+    this.intervalID = [];
+
     this.status.running = false;
+};
+
+// 計算平均登入數
+Commander.prototype._calculateAvgLogin = function() {
+    var loginDiff = this.status.loginCount - this.preLoginCount;
+    this.preLoginCount = this.status.loginCount;
+    var finishDiff = this.status.finishCount - this.preFinishCount;
+    this.preFinishCount = this.status.finishCount;
+    this.status.loginPerSecond = ((loginDiff + finishDiff < 0) ? 0 : loginDiff + finishDiff) / 10;
 };
 
 module.exports = Commander;

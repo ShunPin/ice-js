@@ -41,7 +41,7 @@ method.createRunner = function() {
             runner.loginInfo = fastLoginInfo;
         }
         else {
-            logger.warning('FastLogin 無可用帳號!!');
+            logger.warn('FastLogin 無可用帳號!!');
         }
     }
 
