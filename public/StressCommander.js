@@ -23,10 +23,7 @@ if( !String.prototype.format ) {
     String.prototype.format = function() {
         var args = arguments;
         return this.replace(/{(\d+)}/g, function(match, number) {
-            return typeof args[number] != 'undefined'
-                ? args[number]
-                : match
-                ;
+            return typeof args[number] != 'undefined' ? args[number] : match;
         });
     };
 }
@@ -172,6 +169,10 @@ Commander.prototype._stop = function() {
     this.intervalID = [];
 
     this.status.running = false;
+    this.status.loginPerSecond = 0;
+
+    this.preLoginCount = 0;
+    this.preFinishCount = 0;
 };
 
 // 計算平均登入數
