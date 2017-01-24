@@ -73,10 +73,10 @@ var filelogger = require("log4js").getLogger("stressFile");
         }
     });
 
-    function BravoLogin(deviceID) {
+    function BravoLogin(deviceID, loginInfo) {
         this.axiosConfig = { withCredentials: true, headers: {} };
         this.DeviceId = deviceID;
-        //this.loginInfo = loginInfo;
+        this.loginInfo = loginInfo ? loginInfo : undefined;
         this.SessionCookies = [];
         this.RSAKey = {};
         this.AESKey = { Key: "", IV: "" };
@@ -387,15 +387,11 @@ var filelogger = require("log4js").getLogger("stressFile");
                     function() {
                         // AddCallback 成功
                         logger.debug(proxy_name, "RemoveCallback 成功");
-                        // TODO: Test
-                        debugger;
                     }
                 ).exception(
                     function(ex) {
                         // InvokeError
                         logger.warn(proxy_name, "RemoveCallback Error", ex.toString());
-                        // TODO: Test
-                        debugger;
                         self._callconnectionLister(BravoLogin.ClientFacadeCommand.RemoveCallbackError, JSON.stringify({ ProxyName: proxy_name }));
                     });
             }

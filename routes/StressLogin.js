@@ -27,7 +27,8 @@ router.get('/test', function (req, res, next) {
     log.fatal("Cheese was breeding ground for listeria.");
     log.mark("Cheese marks");
 
-    res.send('test OK');
+    var config = require('../config')[express().get('env')];
+    res.send('test OK, stunnel_host=' + config.stunnel_host);
     res.status(200).end();
 });
 
