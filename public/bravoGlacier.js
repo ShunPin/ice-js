@@ -1,6 +1,6 @@
 (function(module, require, exports) {
-    var Ice = require('Ice').Ice;
-    var Glacier2 = require("Ice").Glacier2;
+    var Ice = require('ice').Ice;
+    var Glacier2 = require("ice").Glacier2;
     var RequestContract = require('../public/RequestContract').SGTech.AtlanticCity.RequestContract;
     var MemberCenter = require('../public/RouterSession').SGTech.AtlanticCity.MemberCenter;
     //var ClientFacade = require('../public/ClientDynamicInvoke').SGTech.AtlanticCity.ClientFacade;
@@ -22,9 +22,9 @@
             this.loginInfo = loginInfo;
 
             // 取 loginInfo.GlacierConnectionString (連線字串), 為 Default router
-            this.GlacierConnectionString = "AtlanticCity.Glacier2/router :tcp -h 10.9.11.140 -p 8000";
-            this.GlacierConnectionString += " :tcp -h 10.9.11.140 -p 8001";
-            this.GlacierConnectionString += " :tcp -h 10.9.11.140 -p 8002";
+            this.GlacierConnectionString = "AtlanticCity.Glacier2/router :tcp -h 127.0.0.1 -p 8000";
+            this.GlacierConnectionString += " :tcp -h 127.0.0.1 -p 8001";
+            this.GlacierConnectionString += " :tcp -h 127.0.0.1 -p 8002";
 
             console.log("connectionString: " + JSON.stringify(this.GlacierConnectionString));
 

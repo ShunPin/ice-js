@@ -21,7 +21,7 @@ method.setWebsite = function(url) {
 
 method.createRunner = function() {
     var self = this;
-    var Ice = require("Ice").Ice;
+    var Ice = require("ice").Ice;
     var BravoLogin = require('../public/bravoLogin').BravoLogin;
     var isGuestLogin = (self.Config.method == 'GuestLogin');
     var deviceID;
@@ -53,7 +53,7 @@ method.createRunner = function() {
 
 method.runAction = function(runner) {
     var self = this;
-    var Ice = require("Ice").Ice;
+    var Ice = require("ice").Ice;
     var user = require('../server/modelUser');
     var isGuestLogin = (self.Config.method == 'GuestLogin');
     var stayTime = self.Config.stayTime * 1000;

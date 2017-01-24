@@ -18,7 +18,7 @@ method.setWebsite = function (url) {
 method.createRunner = function () {
     //var self = this;
 
-    var Ice = require("Ice").Ice;
+    var Ice = require("ice").Ice;
     var runner = new Ice.Promise();
 
     return runner;
@@ -26,7 +26,7 @@ method.createRunner = function () {
 
 method.runAction = function (runner) {
     var self = this;
-    //var Ice = require("Ice").Ice;
+    //var Ice = require("ice").Ice;
     //var isGuestLogin = (self.Config.method == 'GuestLogin') ? true : false;
     var stayTime = self.Config.stayTime * 1000;
     //var setting = self.Config;

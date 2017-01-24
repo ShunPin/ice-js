@@ -7,7 +7,7 @@ var router = express.Router();
 var path = require('path');
 var log = require("log4js").getLogger("stress");
 var errlogger = require("log4js").getLogger("stressError");
-var Ice = require("Ice").Ice;
+var Ice = require("ice").Ice;
 var Commander = require('../public/StressCommander');
 var BravoLogin = require('../public/bravoLogin').BravoLogin;
 
