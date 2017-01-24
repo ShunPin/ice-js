@@ -5,8 +5,6 @@
 var logger = require("log4js").getLogger("stress");
 var filelogger = require("log4js").getLogger("stressFile");
 var ClientFacadeCommand = require("../public/bravoLogin").BravoLogin.ClientFacadeCommand;
-var Ice = require("Ice").Ice;
-var user = require('../server/modelUser');
 
 const _super = require('../public/StressCommander').prototype;
 
