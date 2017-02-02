@@ -1,6 +1,6 @@
 {
 	"development": {
-		"stunnel_host": "10.9.11.140"
+		"stunnel_host": "127.0.0.1"
 	},
 	"production": {
 		"stunnel_host": "10.9.11.140"
